@@ -37,7 +37,7 @@ public class JPAConfiguration {
     public HibernateJpaVendorAdapter jpaVendorAdapter(){
         HibernateJpaVendorAdapter adapter = new HibernateJpaVendorAdapter();
         adapter.setDatabase(Database.MYSQL);
-        adapter.setDatabasePlatform("org.hibernate.dialect.MySQLDialect");
+        adapter.setDatabasePlatform("org.hibernate.dialect.MySQL8Dialect");
         return adapter;
     }
 
@@ -54,7 +54,7 @@ public class JPAConfiguration {
                 ImmutableMap.of(
 //                        AvailableSettings.DIALECT, "org.hibernate.dialect.MySQLDialect",
 //                        AvailableSettings.SHOW_SQL, "true",
-                        AvailableSettings.HBM2DDL_AUTO, "create"
+                        AvailableSettings.HBM2DDL_AUTO, "update"
                 )
         );
 
