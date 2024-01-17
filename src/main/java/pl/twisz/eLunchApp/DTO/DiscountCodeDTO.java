@@ -1,4 +1,4 @@
-package pl.twisz.eLunchApp.model;
+package pl.twisz.eLunchApp.DTO;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Digits;
@@ -12,21 +12,13 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
-@Entity
-public class DiscountCode {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    @Column(unique = true)
+public class DiscountCodeDTO {
     @NotNull
     private UUID uuid;
 
     @NotBlank
     private String code;
 
-    @Column(scale = 2, precision = 12)
     @Digits(integer = 10, fraction = 2)
     @Min(0)
     @NotNull
@@ -38,23 +30,13 @@ public class DiscountCode {
 
     @NotNull
     @Embedded
-    private Period period;
+    private PeriodDTO periodDTO;
 
     @Nullable
-    @ManyToMany
-    private List<User> users;
+    private List<UserDTO> userDTOS;
 
     @Nullable
-    @ManyToMany
-    private List<Restaurant> restaurants;
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
+    private List<RestaurantDTO> restaurantDTOS;
 
     public UUID getUuid() {
         return uuid;
@@ -88,29 +70,29 @@ public class DiscountCode {
         this.discountUnit = discountUnit;
     }
 
-    public Period getPeriod() {
-        return period;
+    public PeriodDTO getPeriodDTO() {
+        return periodDTO;
     }
 
-    public void setPeriod(Period period) {
-        this.period = period;
-    }
-
-    @Nullable
-    public List<User> getUsers() {
-        return users;
-    }
-
-    public void setUsers(@Nullable List<User> users) {
-        this.users = users;
+    public void setPeriodDTO(PeriodDTO periodDTO) {
+        this.periodDTO = periodDTO;
     }
 
     @Nullable
-    public List<Restaurant> getRestaurants() {
-        return restaurants;
+    public List<UserDTO> getUserDTOS() {
+        return userDTOS;
     }
 
-    public void setRestaurants(@Nullable List<Restaurant> restaurants) {
-        this.restaurants = restaurants;
+    public void setUserDTOS(@Nullable List<UserDTO> userDTOS) {
+        this.userDTOS = userDTOS;
+    }
+
+    @Nullable
+    public List<RestaurantDTO> getRestaurantDTOS() {
+        return restaurantDTOS;
+    }
+
+    public void setRestaurantDTOS(@Nullable List<RestaurantDTO> restaurantDTOS) {
+        this.restaurantDTOS = restaurantDTOS;
     }
 }

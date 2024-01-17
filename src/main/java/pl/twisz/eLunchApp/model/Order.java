@@ -54,6 +54,10 @@ public class Order {
     private OrderStatus orderStatus;
 
     @NotNull
+    @OneToOne
+    private DeliveryAddress deliveryAddress;
+
+    @NotNull
     @Min(1)
     @OneToMany
     private List<OrderItem> orderItems;
@@ -134,6 +138,14 @@ public class Order {
 
     public void setOrderStatus(OrderStatus orderStatus) {
         this.orderStatus = orderStatus;
+    }
+
+    public DeliveryAddress getDeliveryAddress() {
+        return deliveryAddress;
+    }
+
+    public void setDeliveryAddress(DeliveryAddress deliveryAddress) {
+        this.deliveryAddress = deliveryAddress;
     }
 
     public List<OrderItem> getOrderItems() {
