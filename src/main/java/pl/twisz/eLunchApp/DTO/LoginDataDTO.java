@@ -4,7 +4,9 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
+import net.karneim.pojobuilder.GeneratePojoBuilder;
 
+@GeneratePojoBuilder
 @Embeddable
 public class LoginDataDTO {
 

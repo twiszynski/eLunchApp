@@ -4,12 +4,13 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
+import net.karneim.pojobuilder.GeneratePojoBuilder;
 import pl.twisz.eLunchApp.model.enums.EvidenceType;
 
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
-
+@GeneratePojoBuilder
 @Entity
 public class OperationEvidence {
 

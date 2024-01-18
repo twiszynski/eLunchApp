@@ -1,10 +1,11 @@
 package pl.twisz.eLunchApp.DTO;
 
 import jakarta.validation.constraints.NotNull;
+import net.karneim.pojobuilder.GeneratePojoBuilder;
 
 import javax.annotation.Nullable;
 import java.util.UUID;
-
+@GeneratePojoBuilder
 public class DeliveryAddressDTO {
     @NotNull
     private UUID uuid;

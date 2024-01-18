@@ -5,12 +5,13 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
+import net.karneim.pojobuilder.GeneratePojoBuilder;
 import pl.twisz.eLunchApp.model.User;
 
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
-
+@GeneratePojoBuilder
 public class OrderDTO {
     @NotNull
     private UUID uuid;

@@ -2,10 +2,11 @@ package pl.twisz.eLunchApp.model;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
+import net.karneim.pojobuilder.GeneratePojoBuilder;
 import pl.twisz.eLunchApp.model.enums.DayOfWeek;
 
 import java.util.UUID;
-
+@GeneratePojoBuilder
 @Entity
 public class OpenTime {
 

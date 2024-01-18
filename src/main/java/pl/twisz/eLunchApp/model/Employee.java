@@ -2,10 +2,11 @@ package pl.twisz.eLunchApp.model;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
+import net.karneim.pojobuilder.GeneratePojoBuilder;
 import pl.twisz.eLunchApp.model.enums.Archive;
 
 import java.util.UUID;
-
+@GeneratePojoBuilder
 @Entity
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorValue("employee")

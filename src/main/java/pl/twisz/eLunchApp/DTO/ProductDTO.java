@@ -4,10 +4,11 @@ import jakarta.annotation.Nullable;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import net.karneim.pojobuilder.GeneratePojoBuilder;
 
 import java.util.List;
 import java.util.UUID;
-
+@GeneratePojoBuilder
 public class ProductDTO {
 
     @NotNull

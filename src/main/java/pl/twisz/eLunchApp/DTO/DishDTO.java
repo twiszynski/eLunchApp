@@ -3,11 +3,12 @@ package pl.twisz.eLunchApp.DTO;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
+import net.karneim.pojobuilder.GeneratePojoBuilder;
 
 import javax.annotation.Nullable;
 import java.util.List;
 import java.util.UUID;
-
+@GeneratePojoBuilder
 public class DishDTO {
     @NotNull
     private UUID uuid;

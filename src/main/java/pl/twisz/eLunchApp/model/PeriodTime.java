@@ -2,11 +2,12 @@ package pl.twisz.eLunchApp.model;
 
 import jakarta.annotation.Nullable;
 import jakarta.persistence.Embeddable;
+import net.karneim.pojobuilder.GeneratePojoBuilder;
 import pl.twisz.eLunchApp.validator.PeriodTimeConstraint;
 
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-
+@GeneratePojoBuilder
 @Embeddable
 @PeriodTimeConstraint
 public class PeriodTime {

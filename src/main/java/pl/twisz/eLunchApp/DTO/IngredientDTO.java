@@ -3,9 +3,10 @@ package pl.twisz.eLunchApp.DTO;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import net.karneim.pojobuilder.GeneratePojoBuilder;
 
 import java.util.UUID;
-
+@GeneratePojoBuilder
 public class IngredientDTO {
 
     @NotNull

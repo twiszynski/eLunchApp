@@ -2,9 +2,10 @@ package pl.twisz.eLunchApp.DTO;
 
 import jakarta.persistence.Embeddable;
 import jakarta.validation.constraints.NotNull;
+import net.karneim.pojobuilder.GeneratePojoBuilder;
 
 import java.time.Instant;
-
+@GeneratePojoBuilder
 @Embeddable
 public class OrderStatusDTO {
 

@@ -2,13 +2,14 @@ package pl.twisz.eLunchApp.model;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
+import net.karneim.pojobuilder.GeneratePojoBuilder;
 import pl.twisz.eLunchApp.model.Dish;
 import pl.twisz.eLunchApp.model.enums.VatTax;
 
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
-
+@GeneratePojoBuilder
 @Entity
 @Table(name = "menuitems")
 public class MenuItem {
