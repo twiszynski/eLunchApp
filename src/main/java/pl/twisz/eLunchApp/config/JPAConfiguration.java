@@ -48,7 +48,8 @@ public class JPAConfiguration {
         entityManagerFactory.setDataSource(dataSource);
         entityManagerFactory.setJpaVendorAdapter(jpaVendorAdapter);
         entityManagerFactory.setPackagesToScan(
-                "pl.twisz.eLunchApp.model"
+                "pl.twisz.eLunchApp.model",
+                "pl.twisz.eLunchApp.converter"
         );
         entityManagerFactory.setJpaPropertyMap(
                 ImmutableMap.of(
