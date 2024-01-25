@@ -1,0 +1,129 @@
+openapi: 3.0.1
+info:
+  title: API / Delivery addresses
+  version: 1.0.0-oas3
+servers:
+  - url: http://localhost/api
+tags:
+  - name: delivery addresses
+    description: ''
+paths:
+  /delivery-addresses:
+    get:
+      tags:
+        - delivery addresses
+      summary: Pobiera listę adresów
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DeliveryAddress'
+  /delivery-addresses/{delivery-address-uuid}:
+    get:
+      tags:
+        - delivery addresses
+      summary: Pobiera wskazany adres
+      parameters:
+        - name: delivery-address-uuid
+          in: path
+          description: UUID pobieranego adresu
+          required: true
+          schema:
+            type: string
+            format: UUID
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeliveryAddress'
+        '404':
+          description: Not found
+          content: {}
+    put:
+      tags:
+        - delivery addresses
+      summary: Dodawanie lub nadpisywania adresu
+      parameters:
+        - name: delivery-address-uuid
+          in: path
+          description: UUID pobieranego adresu
+          required: true
+          schema:
+            type: string
+            format: UUID
+      requestBody:
+        description: Uaktualniany lub wstawiany adres
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DeliveryAddress"
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeliveryAddress'
+        '400':
+          description: Validation error
+          content: { }
+    delete:
+      tags:
+        - delivery addresses
+      summary: Usuwa adres
+      parameters:
+        - name: delivery-address-uuid
+          in: path
+          description: UUID pobieranego adresu
+          required: true
+          schema:
+            type: string
+            format: UUID
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeliveryAddress'
+        '404':
+          description: Not found
+          content: { }
+components:
+  schemas:
+    DeliveryAddress:
+      type: object
+      properties:
+        uuid:
+          type: string
+          format: UUID
+        description:
+          type: string
+        street:
+          type: string
+        streetNumber:
+          type: string
+        localNumber:
+          type: string
+        city:
+          type: string
+        borough:
+          type: string
+        county:
+          type: string
+        state:
+          type: string
+        user:
+          $ref: '#/components/schemas/User'
+    User:
+      type: object
+      properties:
+        uuid:
+          type: string
+          format: UUID
