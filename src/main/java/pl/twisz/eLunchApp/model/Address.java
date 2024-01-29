@@ -20,6 +20,9 @@ public class Address {
     @NotNull
     private String city;
 
+    @NotNull
+    private String postcode;
+
     @Nullable
     private String borough;
 
@@ -59,6 +62,14 @@ public class Address {
 
     public void setCity(String city) {
         this.city = city;
+    }
+
+    public String getPostcode() {
+        return postcode;
+    }
+
+    public void setPostcode(String postcode) {
+        this.postcode = postcode;
     }
 
     @Nullable
