@@ -1,5 +1,6 @@
 package pl.twisz.eLunchApp.DTO;
 
+import com.fasterxml.jackson.annotation.JsonView;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import net.karneim.pojobuilder.GeneratePojoBuilder;
@@ -9,17 +10,26 @@ import java.util.UUID;
 @GeneratePojoBuilder
 public class OpenTimeDTO {
 
+    public static class View {
+        public interface Basic {}
+        public interface Extended extends Basic {}
+    }
+
+    @JsonView(View.Basic.class)
     @NotNull
     private UUID uuid;
 
+    @JsonView(View.Extended.class)
     @NotNull
     @Enumerated(EnumType.STRING)
     private DayOfWeek dayOfWeek;
 
+    @JsonView(View.Extended.class)
     @NotNull
     @Embedded
     private PeriodTimeDTO periodTimeDTO;
 
+    @JsonView(View.Extended.class)
     @NotNull
     private RestaurantDTO restaurantDTO;
 

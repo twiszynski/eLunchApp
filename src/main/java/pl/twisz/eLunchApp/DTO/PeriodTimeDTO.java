@@ -1,5 +1,6 @@
 package pl.twisz.eLunchApp.DTO;
 
+import com.fasterxml.jackson.annotation.JsonView;
 import jakarta.annotation.Nullable;
 import jakarta.persistence.Embeddable;
 import net.karneim.pojobuilder.GeneratePojoBuilder;
@@ -11,9 +12,15 @@ import java.time.LocalTime;
 @PeriodTimeConstraint
 public class PeriodTimeDTO {
 
+    public static class View {
+        public interface Basic {}
+    }
+
+    @JsonView(View.Basic.class)
     @Nullable
     private LocalTime begin;
 
+    @JsonView(View.Basic.class)
     @Nullable
     private LocalTime end;
 

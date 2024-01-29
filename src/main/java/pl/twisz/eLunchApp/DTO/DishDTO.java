@@ -1,8 +1,10 @@
 package pl.twisz.eLunchApp.DTO;
 
+import com.fasterxml.jackson.annotation.JsonView;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Null;
 import net.karneim.pojobuilder.GeneratePojoBuilder;
 
 import javax.annotation.Nullable;
@@ -10,17 +12,30 @@ import java.util.List;
 import java.util.UUID;
 @GeneratePojoBuilder
 public class DishDTO {
+
+    public static class View {
+        public interface Basic {}
+        public interface Extended extends Basic {}
+    }
+
+    public interface DataUpdateValidation {}
+
+    @JsonView(View.Basic.class)
     @NotNull
     private UUID uuid;
 
+    @JsonView(View.Extended.class)
     @NotNull
     @Min(1)
     private Integer quantity;
 
+    @JsonView(View.Extended.class)
     @NotNull
     private ProductDTO productDTO;
 
+    @JsonView(View.Extended.class)
     @Nullable
+    @Null(groups = DataUpdateValidation.class)
     private List<MenuItemDTO> menuItemDTOS;
 
     public UUID getUuid() {

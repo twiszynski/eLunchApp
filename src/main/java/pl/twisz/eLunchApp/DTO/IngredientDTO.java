@@ -1,5 +1,6 @@
 package pl.twisz.eLunchApp.DTO;
 
+import com.fasterxml.jackson.annotation.JsonView;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -9,12 +10,19 @@ import java.util.UUID;
 @GeneratePojoBuilder
 public class IngredientDTO {
 
+    public static class View {
+        public interface Basic {}
+    }
+
+    @JsonView(View.Basic.class)
     @NotNull
     private UUID uuid;
 
+    @JsonView(View.Basic.class)
     @NotBlank
     private String name;
 
+    @JsonView(View.Basic.class)
     @NotNull
     private Boolean isAllergen;
 

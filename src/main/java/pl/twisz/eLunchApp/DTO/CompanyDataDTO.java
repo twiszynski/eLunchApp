@@ -1,5 +1,6 @@
 package pl.twisz.eLunchApp.DTO;
 
+import com.fasterxml.jackson.annotation.JsonView;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import jakarta.persistence.Embedded;
@@ -9,23 +10,34 @@ import net.karneim.pojobuilder.GeneratePojoBuilder;
 @GeneratePojoBuilder
 @Embeddable
 public class CompanyDataDTO {
+
+    public static class View {
+        public interface Basic {}
+        public interface Extended extends Basic {}
+    }
+
+    @JsonView(View.Basic.class)
     @NotNull
-    @Column(name = "companyName")
     private String name;
 
+    @JsonView(View.Extended.class)
     @Embedded
     @NotNull
     private AddressDTO addressDTO;
 
+    @JsonView(View.Extended.class)
     @NotNull
     private String NIP;
 
+    @JsonView(View.Extended.class)
     @NotNull
     private String REGON;
 
+    @JsonView(View.Extended.class)
     @NotNull
     private String phone;
 
+    @JsonView(View.Extended.class)
     @NotNull
     private String email;
 

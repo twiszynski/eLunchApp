@@ -1,8 +1,12 @@
 package pl.twisz.eLunchApp.DTO;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonView;
+import jakarta.annotation.Nullable;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Null;
 import jakarta.validation.constraints.Size;
 import net.karneim.pojobuilder.GeneratePojoBuilder;
 import pl.twisz.eLunchApp.model.enums.Archive;
@@ -12,33 +16,52 @@ import java.util.UUID;
 @GeneratePojoBuilder
 public class RestaurantDTO {
 
+    public static class View {
+        public interface Id {}
+        public interface Basic extends Id {}
+        public interface Extended extends Basic {}
+    }
+
+    public interface DataUpdateValidation {}
+
+    @JsonView(View.Id.class)
     @NotNull
     private UUID uuid;
 
+    @JsonView(View.Basic.class)
     @NotBlank
     private String name;
 
+    @JsonView(View.Basic.class)
     @NotNull
     @Embedded
     private LoginDataDTO loginDataDTO;
 
+    @JsonView(View.Extended.class)
     @NotNull
     @Embedded
     private CompanyDataDTO companyDataDTO;
 
+    @JsonView(View.Extended.class)
     @NotNull
     @Size(max = 7)
     private List<OpenTimeDTO> openTimeDTOS;
 
-    @NotNull
+    @JsonView(View.Extended.class)
+    @Nullable
+    @Null(groups = DataUpdateValidation.class)
     private List<MenuItemDTO> menuItemDTOS;
 
-    @NotNull
+    @JsonView(View.Extended.class)
+    @Nullable
+    @Null(groups = DataUpdateValidation.class)
     private List<OrderDTO> orderDTOS;
 
+    @JsonIgnore
     @NotNull
     private List<DiscountCodeDTO> discountCodeDTOS;
 
+    @JsonView(View.Extended.class)
     @NotNull
     @Enumerated(EnumType.STRING)
     private Archive archive;

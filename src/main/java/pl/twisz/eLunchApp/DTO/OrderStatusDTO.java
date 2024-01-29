@@ -1,5 +1,7 @@
 package pl.twisz.eLunchApp.DTO;
 
+import com.fasterxml.jackson.annotation.JsonView;
+import jakarta.annotation.Nullable;
 import jakarta.persistence.Embeddable;
 import jakarta.validation.constraints.NotNull;
 import net.karneim.pojobuilder.GeneratePojoBuilder;
@@ -9,16 +11,29 @@ import java.time.Instant;
 @Embeddable
 public class OrderStatusDTO {
 
+    public static class View {
+        public interface Basic {}
+    }
+
+    public interface GiveOutStatusValidation {}
+    public interface DeliveryStatusValidation {}
+
+    @JsonView(View.Basic.class)
     @NotNull
     private Instant orderTime;
 
+    @JsonView(View.Basic.class)
     @NotNull
     private Boolean isPaid;
 
-    @NotNull
+    @JsonView(View.Basic.class)
+    @NotNull(groups = GiveOutStatusValidation.class)
+    @Nullable
     private Instant giveOutTime;
 
-    @NotNull
+    @JsonView(View.Basic.class)
+    @NotNull(groups = DeliveryStatusValidation.class)
+    @Nullable
     private Instant deliveryTime;
 
     public Instant getOrderTime() {

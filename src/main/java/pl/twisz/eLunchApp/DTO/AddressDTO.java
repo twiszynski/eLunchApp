@@ -1,5 +1,6 @@
 package pl.twisz.eLunchApp.DTO;
 
+import com.fasterxml.jackson.annotation.JsonView;
 import jakarta.persistence.Embeddable;
 import jakarta.validation.constraints.NotNull;
 import net.karneim.pojobuilder.GeneratePojoBuilder;
@@ -9,24 +10,41 @@ import javax.annotation.Nullable;
 @GeneratePojoBuilder
 @Embeddable
 public class AddressDTO {
+
+    public static class View {
+        public interface Basic {}
+        public interface Extended extends Basic {}
+    }
+
+    @JsonView(View.Basic.class)
     @NotNull
     private String street;
 
+    @JsonView(View.Basic.class)
     @NotNull
     private String streetNumber;
 
+    @JsonView(View.Basic.class)
     @NotNull
     private String localNumber;
 
+    @JsonView(View.Basic.class)
     @NotNull
     private String city;
 
+    @JsonView(View.Basic.class)
+    @NotNull
+    private String postcode;
+
+    @JsonView(View.Extended.class)
     @Nullable
     private String borough;
 
+    @JsonView(View.Extended.class)
     @Nullable
     private String county;
 
+    @JsonView(View.Extended.class)
     @Nullable
     private String state;
 

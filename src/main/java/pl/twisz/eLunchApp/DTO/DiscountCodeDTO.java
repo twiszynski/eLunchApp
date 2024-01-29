@@ -1,5 +1,6 @@
 package pl.twisz.eLunchApp.DTO;
 
+import com.fasterxml.jackson.annotation.JsonView;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.Min;
@@ -14,28 +15,41 @@ import java.util.List;
 import java.util.UUID;
 @GeneratePojoBuilder
 public class DiscountCodeDTO {
+
+    public static class View {
+        public interface Basic {}
+        public interface Extended extends Basic {}
+    }
+
+    @JsonView(View.Basic.class)
     @NotNull
     private UUID uuid;
 
+    @JsonView(View.Basic.class)
     @NotBlank
     private String code;
 
+    @JsonView(View.Extended.class)
     @Digits(integer = 10, fraction = 2)
     @Min(0)
     @NotNull
     private BigDecimal discount;
 
+    @JsonView(View.Extended.class)
     @NotNull
     @Enumerated(EnumType.STRING)
     private DiscountUnit discountUnit;
 
+    @JsonView(View.Basic.class)
     @NotNull
     @Embedded
     private PeriodDTO periodDTO;
 
+    @JsonView(View.Extended.class)
     @Nullable
     private List<UserDTO> userDTOS;
 
+    @JsonView(View.Extended.class)
     @Nullable
     private List<RestaurantDTO> restaurantDTOS;
 

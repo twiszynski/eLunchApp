@@ -1,5 +1,6 @@
 package pl.twisz.eLunchApp.DTO;
 
+import com.fasterxml.jackson.annotation.JsonView;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import net.karneim.pojobuilder.GeneratePojoBuilder;
@@ -9,17 +10,27 @@ import java.util.UUID;
 @GeneratePojoBuilder
 public class EmployeeDTO {
 
+    public static class View {
+        public interface Id {}
+        public interface Basic extends Id {}
+        public interface Extended extends Basic {}
+    }
+
+    @JsonView(View.Basic.class)
     @NotNull
     private UUID uuid;
 
+    @JsonView(View.Basic.class)
     @NotNull
     @Embedded
     private PersonalDataDTO personalDataDTO;
 
+    @JsonView(View.Extended.class)
     @Embedded
     @NotNull
     private LoginDataDTO loginDataDTO;
 
+    @JsonView(View.Extended.class)
     @NotNull
     @Enumerated(EnumType.STRING)
     private Archive archive;
