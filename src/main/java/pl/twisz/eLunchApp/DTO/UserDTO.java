@@ -35,7 +35,7 @@ public class UserDTO {
 
     @JsonView(View.Extended.class)
     @Nullable
-    private List<DeliveryAddressDTO> addressDTOS;
+    private List<DeliveryAddressDTO> deliveryAddressDTOS;
 
     @JsonView(View.Extended.class)
     @NotNull
@@ -79,12 +79,12 @@ public class UserDTO {
     }
 
     @Nullable
-    public List<DeliveryAddressDTO> getAddressDTOS() {
-        return addressDTOS;
+    public List<DeliveryAddressDTO> getDeliveryAddressDTOS() {
+        return deliveryAddressDTOS;
     }
 
-    public void setAddressDTOS(@Nullable List<DeliveryAddressDTO> addressDTOS) {
-        this.addressDTOS = addressDTOS;
+    public void setDeliveryAddressDTOS(@Nullable List<DeliveryAddressDTO> deliveryAddressDTOS) {
+        this.deliveryAddressDTOS = deliveryAddressDTOS;
     }
 
     public LoginDataDTO getLoginDataDTO() {

@@ -25,12 +25,13 @@ public class DelivererDTO extends EmployeeDTO {
     @Null(groups = NewDelivererValidation.class)
     private List<OrderDTO> orderDTOS;
 
+
     @Nullable
-    public List<OrderDTO> getOrders() {
+    public List<OrderDTO> getOrderDTOS() {
         return orderDTOS;
     }
 
-    public void setOrders(@Nullable List<OrderDTO> orderDTOS) {
+    public void setOrderDTOS(@Nullable List<OrderDTO> orderDTOS) {
         this.orderDTOS = orderDTOS;
     }
 }
