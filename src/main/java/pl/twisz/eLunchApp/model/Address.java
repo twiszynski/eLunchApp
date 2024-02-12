@@ -98,4 +98,6 @@ public class Address {
     public void setState(@Nullable String state) {
         this.state = state;
     }
+
+
 }

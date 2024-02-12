@@ -106,4 +106,14 @@ public class AddressDTO {
     public void setState(@Nullable String state) {
         this.state = state;
     }
+
+    public String getPostcode() {
+        return postcode;
+    }
+
+    public void setPostcode(String postcode) {
+        this.postcode = postcode;
+    }
+
+
 }

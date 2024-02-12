@@ -31,6 +31,9 @@ public class DeliveryAddress {
     private String localNumber;
 
     @NotNull
+    private String postcode;
+
+    @NotNull
     private String city;
 
     @Nullable
@@ -136,5 +139,13 @@ public class DeliveryAddress {
 
     public void setUser(User user) {
         this.user = user;
+    }
+
+    public String getPostcode() {
+        return postcode;
+    }
+
+    public void setPostcode(String postcode) {
+        this.postcode = postcode;
     }
 }

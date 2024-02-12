@@ -36,6 +36,10 @@ public class DeliveryAddressDTO {
 
     @JsonView(View.Extended.class)
     @NotNull
+    private String postcode;
+
+    @JsonView(View.Extended.class)
+    @NotNull
     private String city;
 
     @JsonView(View.Extended.class)
@@ -136,5 +140,13 @@ public class DeliveryAddressDTO {
 
     public void setUserDTO(UserDTO userDTO) {
         this.userDTO = userDTO;
+    }
+
+    public String getPostcode() {
+        return postcode;
+    }
+
+    public void setPostcode(String postcode) {
+        this.postcode = postcode;
     }
 }
