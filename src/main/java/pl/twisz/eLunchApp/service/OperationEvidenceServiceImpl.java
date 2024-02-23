@@ -1,12 +1,16 @@
 package pl.twisz.eLunchApp.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
+import pl.twisz.eLunchApp.model.DiscountCode;
 import pl.twisz.eLunchApp.model.OperationEvidence;
 import pl.twisz.eLunchApp.model.User;
 import pl.twisz.eLunchApp.repo.OpenTimeRepo;
 import pl.twisz.eLunchApp.repo.OperationEvidenceRepo;
 import pl.twisz.eLunchApp.repo.RestaurantRepo;
+import pl.twisz.eLunchApp.utils.ConverterUtils;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -24,31 +28,43 @@ public class OperationEvidenceServiceImpl implements OperationEvidenceService {
 
     @Override
     public List<OperationEvidence> getAll() {
-        return null;
+        return operationEvidenceRepo.findAll();
     }
 
     @Override
-    public void put(UUID uuid, OperationEvidence operationEvidence) {
-
+    public void add( OperationEvidence operationEvidence) {
+        operationEvidenceRepo.save(operationEvidence);
     }
 
     @Override
-    public void delete(UUID uuid) {
-
+    public void delete(OperationEvidence operationEvidence) {;
+        operationEvidenceRepo.delete(operationEvidence);
     }
 
-    @Override
-    public Optional<OperationEvidence> getByUuid(UUID uuid) {
-        return Optional.empty();
-    }
 
     @Override
     public BigDecimal getUserAccountBalance(User user) {
-        return null;
+        return operationEvidenceRepo.getUserAccountBalance(user);
     }
 
     @Override
     public BigDecimal getAccountBalanceAfterOperation(OperationEvidence operationEvidence) {
-        return null;
+        BigDecimal balanceBefore = getUserAccountBalance(operationEvidence.getUser());
+        BigDecimal balanceAfter;
+
+        switch (operationEvidence.getType()) {
+            case WITHDRAW, PAYMENT -> {
+                balanceAfter = balanceBefore.subtract(operationEvidence.getAmount());
+                break;
+            }
+            case DEPOSIT -> {
+                balanceAfter = balanceBefore.add(operationEvidence.getAmount());
+                break;
+            }
+            default -> {
+                throw new UnsupportedOperationException();
+            }
+        }
+        return balanceAfter;
     }
 }
