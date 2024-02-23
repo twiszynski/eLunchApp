@@ -12,6 +12,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import pl.twisz.eLunchApp.DTO.*;
+import pl.twisz.eLunchApp.events.OperationEvidenceCreator;
 import pl.twisz.eLunchApp.service.UserService;
 
 import java.util.List;
@@ -68,6 +69,9 @@ public class UserController {
     @PostMapping("/{uuid}/new-operation")
     public void postOperation(@PathVariable UUID uuid, @RequestBody @Valid UserDTO userJson){
         userService.validateNewOperation(uuid, userJson);
+
+        OperationEvidenceCreator operationEvidenceCreator = new OperationEvidenceCreator(this, userJson);
+        applicationEventPublisher.publishEvent(operationEvidenceCreator);
     }
 
     @JsonView(UserView.class)

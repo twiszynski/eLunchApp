@@ -13,6 +13,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import pl.twisz.eLunchApp.DTO.*;
+import pl.twisz.eLunchApp.events.OperationEvidenceCreator;
 import pl.twisz.eLunchApp.service.DelivererService;
 import pl.twisz.eLunchApp.service.OpenTimeService;
 import pl.twisz.eLunchApp.service.OrderService;
@@ -99,6 +100,9 @@ public class OrderController {
         OrderDTO orderDTO = orderService.getByUuid(uuid)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         orderService.setIsPaid(orderDTO);
+
+        OperationEvidenceCreator operationEvidenceCreator = new OperationEvidenceCreator(this, orderService.newOperationForPaidOrder(orderDTO));
+        applicationEventPublisher.publishEvent(operationEvidenceCreator);
     }
 
     @Transactional
