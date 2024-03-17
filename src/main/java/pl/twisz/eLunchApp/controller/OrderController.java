@@ -5,6 +5,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.groups.Default;
 import jakarta.websocket.server.PathParam;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -41,9 +42,9 @@ public class OrderController {
     private final ApplicationEventPublisher applicationEventPublisher;
 
     @Autowired
-    public OrderController(OrderService orderService,
-                           DelivererService delivererService,
-                           UserService userService,
+    public OrderController(@Qualifier("orderServiceImpl") OrderService orderService,
+                           @Qualifier("delivererServiceImpl") DelivererService delivererService,
+                           @Qualifier("userServiceImpl") UserService userService,
                            ApplicationEventPublisher applicationEventPublisher) {
         this.orderService = orderService;
         this.delivererService = delivererService;

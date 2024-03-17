@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonView;
 import jakarta.validation.Valid;
 import jakarta.validation.groups.Default;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -33,7 +34,7 @@ public class UserController {
     private final ApplicationEventPublisher applicationEventPublisher;
 
     @Autowired
-    public UserController(UserService userService, ApplicationEventPublisher applicationEventPublisher) {
+    public UserController(@Qualifier("userServiceImpl") UserService userService, ApplicationEventPublisher applicationEventPublisher) {
         this.userService = userService;
         this.applicationEventPublisher = applicationEventPublisher;
     }

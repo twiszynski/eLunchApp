@@ -2,15 +2,11 @@ package pl.twisz.eLunchApp.service;
 
 import jakarta.activation.UnsupportedDataTypeException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 import pl.twisz.eLunchApp.model.DiscountCode;
 import pl.twisz.eLunchApp.model.OrderItem;
 import pl.twisz.eLunchApp.model.enums.PriceType;
-import pl.twisz.eLunchApp.repo.OperationEvidenceRepo;
 import pl.twisz.eLunchApp.repo.OrderItemRepo;
-import pl.twisz.eLunchApp.utils.ConverterUtils;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -65,9 +61,7 @@ public class OrderItemServiceImpl implements OrderItemService {
                                     .multiply(BigDecimal.valueOf(orderItem.getQuantity())));
                     break;
                 }
-                default -> {
-                    throw new UnsupportedDataTypeException();
-                }
+                default -> throw new UnsupportedDataTypeException();
             }
         }
 
@@ -94,9 +88,7 @@ public class OrderItemServiceImpl implements OrderItemService {
                         .divide(BigDecimal.valueOf(100), RoundingMode.HALF_UP);
                 break;
             }
-            default -> {
-                throw new UnsupportedDataTypeException();
-            }
+            default -> throw new UnsupportedDataTypeException();
         }
 
         return amountToPayBrutto;

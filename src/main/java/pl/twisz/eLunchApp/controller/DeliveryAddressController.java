@@ -3,6 +3,7 @@ package pl.twisz.eLunchApp.controller;
 import com.fasterxml.jackson.annotation.JsonView;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,7 +25,7 @@ public class DeliveryAddressController {
     private final DeliveryAddressService deliveryAddressService;
 
     @Autowired
-    public DeliveryAddressController(DeliveryAddressService deliveryAddressService) {
+    public DeliveryAddressController(@Qualifier("deliveryAddressServiceImpl")DeliveryAddressService deliveryAddressService) {
         this.deliveryAddressService = deliveryAddressService;
     }
 

@@ -3,6 +3,7 @@ package pl.twisz.eLunchApp.service;
 import com.google.common.base.Objects;
 import jakarta.activation.UnsupportedDataTypeException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -26,6 +27,7 @@ public class OrderServiceImpl implements OrderService {
     private final UserRepo userRepo;
     private final RestaurantRepo restaurantRepo;
     private final DelivererRepo delivererRepo;
+    private final DeliveryAddressRepo deliveryAddressRepo;
     private final MenuItemRepo menuItemRepo;
     private final OrderItemRepo orderItemRepo;
     private final DiscountCodeRepo discountCodeRepo;
@@ -36,14 +38,15 @@ public class OrderServiceImpl implements OrderService {
                             UserRepo userRepo,
                             RestaurantRepo restaurantRepo,
                             DelivererRepo delivererRepo,
-                            MenuItemRepo menuItemRepo,
+                            DeliveryAddressRepo deliveryAddressRepo, MenuItemRepo menuItemRepo,
                             OrderItemRepo orderItemRepo,
                             DiscountCodeRepo discountCodeRepo,
-                            OrderItemService orderItemService) {
+                            @Qualifier("orderItemServiceImpl") OrderItemService orderItemService) {
         this.orderRepo = orderRepo;
         this.userRepo = userRepo;
         this.restaurantRepo = restaurantRepo;
         this.delivererRepo = delivererRepo;
+        this.deliveryAddressRepo = deliveryAddressRepo;
         this.menuItemRepo = menuItemRepo;
         this.orderItemRepo = orderItemRepo;
         this.discountCodeRepo = discountCodeRepo;
@@ -70,6 +73,9 @@ public class OrderServiceImpl implements OrderService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST));
 
         Deliverer deliverer = delivererRepo.findByUuid(orderDTO.getDelivererDTO().getUuid())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST));
+
+        DeliveryAddress deliveryAddress = deliveryAddressRepo.findByUuid(orderDTO.getDeliveryAddressDTO().getUuid())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST));
 
         Order order = orderRepo.findByUuid(orderDTO.getUuid())
@@ -110,6 +116,7 @@ public class OrderServiceImpl implements OrderService {
         order.setDiscountCode(discountCode);
         order.setOrderItems(orderItems);
         order.setDeliverer(deliverer);
+        order.setDeliveryAddress(deliveryAddress);
 
         if (order.getId() == null) {
             orderRepo.save(order);
@@ -146,7 +153,7 @@ public class OrderServiceImpl implements OrderService {
             MenuItem menuItem = menuItemRepo.findByUuid(orderItemDTO.getMenuItem().getUuid())
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST));
 
-            OrderItem orderItem = orderItemRepo.findByUuid(orderItemDTO.getUuid())
+            OrderItem orderItem = orderItemService.getByUuid(orderItemDTO.getUuid())
                     .orElseGet(() -> newOrderItem(orderItemDTO.getUuid()));
 
             orderItem.setQuantity(orderItemDTO.getQuantity());

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonView;
 import jakarta.validation.Valid;
 import jakarta.validation.groups.Default;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,7 +34,7 @@ public class DelivererController {
     private final DelivererService delivererService;
 
     @Autowired
-    public DelivererController(DelivererService delivererService) {
+    public DelivererController(@Qualifier("delivererServiceImpl") DelivererService delivererService) {
         this.delivererService = delivererService;
     }
 
