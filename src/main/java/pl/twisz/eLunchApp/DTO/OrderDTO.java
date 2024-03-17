@@ -3,10 +3,7 @@ package pl.twisz.eLunchApp.DTO;
 import com.fasterxml.jackson.annotation.JsonView;
 import jakarta.annotation.Nullable;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Digits;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Null;
+import jakarta.validation.constraints.*;
 import net.karneim.pojobuilder.GeneratePojoBuilder;
 import pl.twisz.eLunchApp.model.User;
 
@@ -67,7 +64,7 @@ public class OrderDTO {
 
     @JsonView(View.Extended.class)
     @NotNull
-    @Min(1)
+    @Size(min = 1)
     private List<OrderItemDTO> orderItemDTOS;
 
     @JsonView(View.Basic.class)

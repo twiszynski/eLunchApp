@@ -2,10 +2,7 @@ package pl.twisz.eLunchApp.model;
 
 import jakarta.annotation.Nullable;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Digits;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Null;
+import jakarta.validation.constraints.*;
 import net.karneim.pojobuilder.GeneratePojoBuilder;
 
 import java.math.BigDecimal;
@@ -59,7 +56,7 @@ public class Order {
     private DeliveryAddress deliveryAddress;
 
     @NotNull
-    @Min(1)
+    @Size(min = 1)
     @OneToMany
     private List<OrderItem> orderItems;
 
