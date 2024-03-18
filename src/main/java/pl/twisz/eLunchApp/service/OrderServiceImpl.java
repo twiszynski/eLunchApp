@@ -246,7 +246,7 @@ public class OrderServiceImpl implements OrderService {
         UserDTO userDTO = ConverterUtils.convert(user);
         userDTO.setOperationEvidenceDTOS(List.of(newOperationForOrderPayment(orderDTO)));
 
-        return null;
+        return userDTO;
     }
 
     private OperationEvidenceDTO newOperationForOrderPayment(OrderDTO orderDTO) {

@@ -1,6 +1,7 @@
 package pl.twisz.eLunchApp.listeners;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.event.EventListener;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
@@ -22,7 +23,7 @@ public class OperationEvidenceListener {
     private final UserRepo userRepo;
 
     @Autowired
-    public OperationEvidenceListener(OperationEvidenceService operationEvidenceService, UserRepo userRepo) {
+    public OperationEvidenceListener(@Qualifier("operationEvidenceServiceImpl") OperationEvidenceService operationEvidenceService, UserRepo userRepo) {
         this.operationEvidenceService = operationEvidenceService;
         this.userRepo = userRepo;
     }
@@ -34,11 +35,11 @@ public class OperationEvidenceListener {
         User user = userRepo.findByUuid(userDTO.getUuid()).orElseThrow();
         operationEvidence.setUser(user);
 
-        validateAcoountBalanceAfterOperation(operationEvidence);
+        validateAccountBalanceAfterOperation(operationEvidence);
         operationEvidenceService.add(operationEvidence);
     }
 
-    private void validateAcoountBalanceAfterOperation(OperationEvidence operationEvidence) {
+    private void validateAccountBalanceAfterOperation(OperationEvidence operationEvidence) {
         BigDecimal accountBalanceAfterOperation = operationEvidenceService.getAccountBalanceAfterOperation(operationEvidence);
         if (accountBalanceAfterOperation.compareTo(BigDecimal.ZERO) <= 0) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
