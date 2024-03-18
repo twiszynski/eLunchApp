@@ -1,15 +1,35 @@
 package pl.twisz.eLunchApp.controller;
 
+import com.google.common.truth.Truth8;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
+import pl.twisz.eLunchApp.DTO.OrderDTO;
+import pl.twisz.eLunchApp.DTO.OrderStatusDTO;
 import pl.twisz.eLunchApp.config.JPAConfiguration;
 import pl.twisz.eLunchApp.listeners.OperationEvidenceListener;
+import pl.twisz.eLunchApp.model.*;
+import pl.twisz.eLunchApp.model.enums.Archive;
+import pl.twisz.eLunchApp.model.enums.EvidenceType;
+import pl.twisz.eLunchApp.model.enums.Sex;
+import pl.twisz.eLunchApp.model.enums.VatTax;
 import pl.twisz.eLunchApp.repo.*;
 import pl.twisz.eLunchApp.service.*;
+import pl.twisz.eLunchApp.utils.AssertionUtils;
+import pl.twisz.eLunchApp.utils.ConverterUtils;
+import pl.twisz.eLunchApp.utils.TestUtils;
+
+import java.math.BigDecimal;
+import java.util.UUID;
 
 
 @SpringBootTest(classes = {
@@ -37,11 +57,12 @@ class OrderControllerTest {
                                          UserRepo userRepo,
                                          RestaurantRepo restaurantRepo,
                                          DelivererRepo delivererRepo,
+                                         DeliveryAddressRepo deliveryAddressRepo,
                                          MenuItemRepo menuItemRepo,
                                          OrderItemRepo orderItemRepo,
                                          DiscountCodeRepo discountCodeRepo,
                                          OrderItemService orderItemService) {
-            return new OrderServiceImpl(orderRepo, userRepo, restaurantRepo, delivererRepo, menuItemRepo,
+            return new OrderServiceImpl(orderRepo, userRepo, restaurantRepo, delivererRepo, deliveryAddressRepo, menuItemRepo,
                     orderItemRepo, discountCodeRepo, orderItemService);
         }
         @Bean
@@ -104,4 +125,882 @@ class OrderControllerTest {
     private PlatformTransactionManager txManager;
 
     private static final String STR_UUID = "92bdee9c-c84a-4b16-8db1-3c9581cd3885";
+
+    // adding an order
+    @Test
+    @Transactional
+    public void put1() {
+        Restaurant restaurant = TestUtils.restaurant("087c502c-559b-4d81-ae53-e67ab6fdf995", "MakJson",
+                TestUtils.loginData("mcJson123", "bigDag123!"),
+                TestUtils.companyData("MakJson sp. z zoo",
+                        TestUtils.address("St. Patric", "152", "00-000", "NY"),
+                        "123-010-00-11", "123123123", "+48 501 502 503", "MJ@gmail.com"), Archive.CURRENT);
+        restaurantRepo.save(restaurant);
+
+        Deliverer deliverer = TestUtils.deliverer("cb093f68-f4f1-4f21-a094-5850150b42dd",
+                TestUtils.personalData("John", "Smith", Sex.MALE, "501-501-501", "jh512@gmail.com"),
+                TestUtils.loginData("jSmith", "I@mIronM@n12"), Archive.CURRENT);
+        delivererRepo.save(deliverer);
+
+        User user = TestUtils.user("9986208e-961a-48d4-bf7a-112c627779c2",
+                TestUtils.personalData("John", "Smith", Sex.MALE, "501-501-501", "jh512@gmail.com"), null,
+                TestUtils.loginData("jSmith1", "I@mIronM@n121"), Archive.CURRENT);
+        userRepo.save(user);
+
+        DeliveryAddress deliveryAddress = TestUtils.deliveryAddress("6d66a218-f493-41ee-8291-a0065fab5cfe", null, "Jana Pawła", "1", "", "00-010", "Warszawa", null, "PL", null, user);
+        deliveryAddressRepo.save(deliveryAddress);
+
+        Ingredient ingredient1 = TestUtils.ingredient("ac30a0fe-f97b-4b08-aaac-1309c76c5455", "Kurczak", true);
+        ingredientRepo.save(ingredient1);
+        Ingredient ingredient2 = TestUtils.ingredient("5632de5e-5c00-463b-b701-152fb76daea3", "Mąka", false);
+        ingredientRepo.save(ingredient2);
+        Ingredient ingredient3 = TestUtils.ingredient("5a1e100b-b82d-42bb-b34f-fc1c3497f9c8", "Kukurydza", true);
+        ingredientRepo.save(ingredient3);
+        Ingredient ingredient4 = TestUtils.ingredient("6b1e5fdc-d771-423e-b968-46e5a03a8200", "Ziemniak", false);
+        ingredientRepo.save(ingredient4);
+        Ingredient ingredient5 = TestUtils.ingredient("e7cec9d4-cdf3-4b32-b2f4-9b90f41a8d05", "Masło", false);
+        ingredientRepo.save(ingredient5);
+        Ingredient ingredient6 = TestUtils.ingredient("dc0ff645-2596-4c7d-a6fa-6926db65be16", "Marchew", false);
+        ingredientRepo.save(ingredient6);
+        Ingredient ingredient7 = TestUtils.ingredient("8ede3563-edd0-4d8b-b121-dd21dd11b7b6", "Jabłko", false);
+        ingredientRepo.save(ingredient7);
+
+        Product product1 = TestUtils.product("19e1281b-949d-48c3-9486-c0abbf7a0267", "Udko korczaka", ingredient1, ingredient2, ingredient3);
+        productRepo.save(product1);
+        Product product2 = TestUtils.product("e192ce71-75a9-4778-82c8-0bff97a98879", "Ziemniak", ingredient4, ingredient5);
+        productRepo.save(product2);
+        Product product3 = TestUtils.product("2af0b1a3-e2be-4e16-bc8b-b5ff4355b44a", "Surówka", ingredient6, ingredient7);
+        productRepo.save(product3);
+
+        Dish dish1 = TestUtils.dish("b9820ee0-c4b8-4ed8-90f7-7fa947f72548", 1, product1);
+        dishRepo.save(dish1);
+        Dish dish2 = TestUtils.dish("74e078d9-f49f-4c53-be67-f9f4cbe5804f", 3, product2);
+        dishRepo.save(dish2);
+        Dish dish3 = TestUtils.dish("0173a261-be83-4e9c-914f-eacfdaba46a8", 1, product3);
+        dishRepo.save(dish3);
+
+        MenuItem menuItem1 = TestUtils.menuItem("3deb5633-e968-4bdc-a114-cd4430a4f003", "Zestaw odbiadowy szefa kuchni", new BigDecimal("20.00"),
+                VatTax._23, new BigDecimal("24.60"), restaurant, dish1, dish2, dish3);
+        menuItemRepo.save(menuItem1);
+
+        OrderDTO orderJson = TestUtils.orderDTO(STR_UUID, null, "Poproszę bez panierki", ConverterUtils.convert(user), ConverterUtils.convert(deliverer),
+                ConverterUtils.convert(deliveryAddress), ConverterUtils.convert(restaurant),
+                ConverterUtils.convert(TestUtils.orderItem("1f4fa012-cd0b-4ae0-bbc0-040d73d75b6c", 2, menuItem1)));
+        orderController.put(UUID.fromString(STR_UUID), orderJson);
+
+        orderJson.setNettoPrice(menuItem1.getNettoPrice().multiply(new BigDecimal(orderJson.getOrderItemDTOS().get(0).getQuantity())));
+        orderJson.setBruttoPrice(menuItem1.getBruttoPrice().multiply(new BigDecimal(orderJson.getOrderItemDTOS().get(0).getQuantity())));
+        orderJson.setAmountToPayBrutto(menuItem1.getBruttoPrice().multiply(new BigDecimal(orderJson.getOrderItemDTOS().get(0).getQuantity())));
+
+        OrderDTO orderDB = orderService.getByUuid(UUID.fromString(STR_UUID)).orElseThrow();
+        AssertionUtils.assertEquals(orderJson, orderDB, AssertionUtils.OrderStatusType.NEW);
+    }
+
+    // updating order in case it is not paid
+    @Test
+    @Transactional
+    public void put2() {
+        Restaurant restaurant = TestUtils.restaurant("087c502c-559b-4d81-ae53-e67ab6fdf995", "MakJson",
+                TestUtils.loginData("mcJson123", "bigDag123!"),
+                TestUtils.companyData("MakJson sp. z zoo",
+                        TestUtils.address("St. Patric", "152", "00-000", "NY"),
+                        "123-010-00-11", "123123123", "+48 501 502 503", "MJ@gmail.com"), Archive.CURRENT);
+        restaurantRepo.save(restaurant);
+
+        Deliverer deliverer1 = TestUtils.deliverer("cb093f68-f4f1-4f21-a094-5850150b42dd",
+                TestUtils.personalData("John", "Smith", Sex.MALE, "501-501-501", "jh512@gmail.com"),
+                TestUtils.loginData("jSmith", "I@mIronM@n12"), Archive.CURRENT);
+        delivererRepo.save(deliverer1);
+        Deliverer deliverer2 = TestUtils.deliverer("9f15cfc3-2568-4fe3-8f94-034a23c9df6f",
+                TestUtils.personalData("John", "Smith", Sex.MALE, "501-501-501", "jh512@gmail.com"),
+                TestUtils.loginData("jSmith3", "I@mIronM@n12"), Archive.CURRENT);
+        delivererRepo.save(deliverer2);
+
+        User user = TestUtils.user("9986208e-961a-48d4-bf7a-112c627779c2", TestUtils.personalData("John", "Smith", Sex.MALE, "501-501-501", "jh512@gmail.com"), null,
+                TestUtils.loginData("jSmith1", "I@mIronM@n121"), Archive.CURRENT);
+        userRepo.save(user);
+
+        DeliveryAddress deliveryAddress = TestUtils.deliveryAddress("6d66a218-f493-41ee-8291-a0065fab5cfe", null, "Jana Pawła", "1",
+                "", "00-010", "Warszawa", null, "PL", null, user);
+        deliveryAddressRepo.save(deliveryAddress);
+
+        Ingredient ingredient1 = TestUtils.ingredient("ac30a0fe-f97b-4b08-aaac-1309c76c5455", "Kurczak", true);
+        ingredientRepo.save(ingredient1);
+        Ingredient ingredient2 = TestUtils.ingredient("5632de5e-5c00-463b-b701-152fb76daea3", "Mąka", false);
+        ingredientRepo.save(ingredient2);
+        Ingredient ingredient3 = TestUtils.ingredient("5a1e100b-b82d-42bb-b34f-fc1c3497f9c8", "Kukurydza", true);
+        ingredientRepo.save(ingredient3);
+        Ingredient ingredient4 = TestUtils.ingredient("6b1e5fdc-d771-423e-b968-46e5a03a8200", "Ziemniak", false);
+        ingredientRepo.save(ingredient4);
+        Ingredient ingredient5 = TestUtils.ingredient("e7cec9d4-cdf3-4b32-b2f4-9b90f41a8d05", "Masło", false);
+        ingredientRepo.save(ingredient5);
+        Ingredient ingredient6 = TestUtils.ingredient("dc0ff645-2596-4c7d-a6fa-6926db65be16", "Marchew", false);
+        ingredientRepo.save(ingredient6);
+        Ingredient ingredient7 = TestUtils.ingredient("8ede3563-edd0-4d8b-b121-dd21dd11b7b6", "Jabłko", false);
+        ingredientRepo.save(ingredient7);
+
+        Product product1 = TestUtils.product("19e1281b-949d-48c3-9486-c0abbf7a0267", "Udko korczaka", ingredient1, ingredient2, ingredient3);
+        productRepo.save(product1);
+        Product product2 = TestUtils.product("e192ce71-75a9-4778-82c8-0bff97a98879", "Ziemniak", ingredient4, ingredient5);
+        productRepo.save(product2);
+        Product product3 = TestUtils.product("2af0b1a3-e2be-4e16-bc8b-b5ff4355b44a", "Surówka", ingredient6, ingredient7);
+        productRepo.save(product3);
+
+        Dish dish1 = TestUtils.dish("b9820ee0-c4b8-4ed8-90f7-7fa947f72548", 1, product1);
+        dishRepo.save(dish1);
+        Dish dish2 = TestUtils.dish("74e078d9-f49f-4c53-be67-f9f4cbe5804f", 3, product2);
+        dishRepo.save(dish2);
+        Dish dish3 = TestUtils.dish("0173a261-be83-4e9c-914f-eacfdaba46a8", 1, product3);
+        dishRepo.save(dish3);
+
+        MenuItem menuItem1 = TestUtils.menuItem("3deb5633-e968-4bdc-a114-cd4430a4f003", "Zestaw odbiadowy szefa kuchni", new BigDecimal("20.00"),
+                VatTax._23, new BigDecimal("24.60"), restaurant, dish1, dish2, dish3);
+        menuItemRepo.save(menuItem1);
+
+        MenuItem menuItem2 = TestUtils.menuItem("44b2cd38-69eb-4178-b271-0bdef113eeea", "Powiększenie zestawu", new BigDecimal("8.00"),
+                VatTax._23, new BigDecimal("9.84"), restaurant, dish1);
+        menuItemRepo.save(menuItem2);
+
+        OrderItem orderItem = TestUtils.orderItem("1f4fa012-cd0b-4ae0-bbc0-040d73d75b6c", 2, menuItem1);
+        orderItemRepo.save(orderItem);
+
+        Order order = TestUtils.order(STR_UUID, null, "Poproszę bez panierki", user,
+                deliverer1, deliveryAddress, restaurant, new BigDecimal("40.00"), new BigDecimal("49.20"), new BigDecimal("49.20"),
+                TestUtils.orderStatus("2020-01-01T15:00:00Z", false, null, null),
+                orderItem
+        );
+        orderRepo.save(order);
+
+        OrderDTO orderJson = TestUtils.orderDTO(STR_UUID, null, "", ConverterUtils.convert(user),
+                ConverterUtils.convert(deliverer2), ConverterUtils.convert(deliveryAddress), ConverterUtils.convert(restaurant),
+                ConverterUtils.convert(orderItem),
+                ConverterUtils.convert(TestUtils.orderItem("a9058ad1-5b4b-4cd1-aec2-fb3bc2b501b7", 2, menuItem2))
+        );
+        orderController.put(UUID.fromString(STR_UUID), orderJson);
+
+        orderJson.setNettoPrice(
+                menuItem1.
+                        getNettoPrice().multiply(new BigDecimal(orderJson.getOrderItemDTOS().get(0).getQuantity()))
+                        .add(menuItem2
+                                .getNettoPrice().multiply(new BigDecimal(orderJson.getOrderItemDTOS().get(1).getQuantity())))
+        );
+        orderJson.setBruttoPrice(menuItem1.
+                getBruttoPrice().multiply(new BigDecimal(orderJson.getOrderItemDTOS().get(0).getQuantity()))
+                .add(menuItem2
+                        .getBruttoPrice().multiply(new BigDecimal(orderJson.getOrderItemDTOS().get(1).getQuantity())))
+        );
+        orderJson.setAmountToPayBrutto(menuItem1.
+                getBruttoPrice().multiply(new BigDecimal(orderJson.getOrderItemDTOS().get(0).getQuantity()))
+                .add(menuItem2
+                        .getBruttoPrice().multiply(new BigDecimal(orderJson.getOrderItemDTOS().get(1).getQuantity())))
+        );
+
+        OrderDTO orderDB = orderService.getByUuid(UUID.fromString(STR_UUID)).orElseThrow();
+        AssertionUtils.assertEquals(orderJson, orderDB, AssertionUtils.OrderStatusType.NEW);
+    }
+
+    // paying for order
+    @Test
+    @Transactional
+    public void setIsPaid1() {
+        Restaurant restaurant = TestUtils.restaurant("087c502c-559b-4d81-ae53-e67ab6fdf995", "MakJson",
+                TestUtils.loginData("mcJson123", "bigDag123!"),
+                TestUtils.companyData("MakJson sp. z zoo",
+                        TestUtils.address("St. Patric", "152", "00-000", "NY"),
+                        "123-010-00-11", "123123123", "+48 501 502 503", "MJ@gmail.com"), Archive.CURRENT);
+        restaurantRepo.save(restaurant);
+
+        Deliverer deliverer = TestUtils.deliverer("cb093f68-f4f1-4f21-a094-5850150b42dd",
+                TestUtils.personalData("John", "Smith", Sex.MALE, "501-501-501", "jh512@gmail.com"),
+                TestUtils.loginData("jSmith", "I@mIronM@n12"), Archive.CURRENT);
+        delivererRepo.save(deliverer);
+
+        User user = TestUtils.user("9986208e-961a-48d4-bf7a-112c627779c2", TestUtils.personalData("John", "Smith", Sex.MALE, "501-501-501", "jh512@gmail.com"), null,
+                TestUtils.loginData("jSmith1", "I@mIronM@n121"), Archive.CURRENT);
+        userRepo.save(user);
+
+        DeliveryAddress deliveryAddress = TestUtils.deliveryAddress("6d66a218-f493-41ee-8291-a0065fab5cfe", null, "Jana Pawła", "1",
+                "", "00-010", "Warszawa", null, "PL", null, user);
+        deliveryAddressRepo.save(deliveryAddress);
+
+        OperationEvidence operationEvidence = TestUtils.operationEvidence("2020-01-01T14:00:15Z", EvidenceType.DEPOSIT, new BigDecimal("50.00"), user);
+        operationEvidenceRepo.save(operationEvidence);
+
+        Ingredient ingredient1 = TestUtils.ingredient("ac30a0fe-f97b-4b08-aaac-1309c76c5455", "Kurczak", true);
+        ingredientRepo.save(ingredient1);
+        Ingredient ingredient2 = TestUtils.ingredient("5632de5e-5c00-463b-b701-152fb76daea3", "Mąka", false);
+        ingredientRepo.save(ingredient2);
+        Ingredient ingredient3 = TestUtils.ingredient("5a1e100b-b82d-42bb-b34f-fc1c3497f9c8", "Kukurydza", true);
+        ingredientRepo.save(ingredient3);
+        Ingredient ingredient4 = TestUtils.ingredient("6b1e5fdc-d771-423e-b968-46e5a03a8200", "Ziemniak", false);
+        ingredientRepo.save(ingredient4);
+        Ingredient ingredient5 = TestUtils.ingredient("e7cec9d4-cdf3-4b32-b2f4-9b90f41a8d05", "Masło", false);
+        ingredientRepo.save(ingredient5);
+        Ingredient ingredient6 = TestUtils.ingredient("dc0ff645-2596-4c7d-a6fa-6926db65be16", "Marchew", false);
+        ingredientRepo.save(ingredient6);
+        Ingredient ingredient7 = TestUtils.ingredient("8ede3563-edd0-4d8b-b121-dd21dd11b7b6", "Jabłko", false);
+        ingredientRepo.save(ingredient7);
+
+        Product product1 = TestUtils.product("19e1281b-949d-48c3-9486-c0abbf7a0267", "Udko korczaka", ingredient1, ingredient2, ingredient3);
+        productRepo.save(product1);
+        Product product2 = TestUtils.product("e192ce71-75a9-4778-82c8-0bff97a98879", "Ziemniak", ingredient4, ingredient5);
+        productRepo.save(product2);
+        Product product3 = TestUtils.product("2af0b1a3-e2be-4e16-bc8b-b5ff4355b44a", "Surówka", ingredient6, ingredient7);
+        productRepo.save(product3);
+
+        Dish dish1 = TestUtils.dish("b9820ee0-c4b8-4ed8-90f7-7fa947f72548", 1, product1);
+        dishRepo.save(dish1);
+        Dish dish2 = TestUtils.dish("74e078d9-f49f-4c53-be67-f9f4cbe5804f", 3, product2);
+        dishRepo.save(dish2);
+        Dish dish3 = TestUtils.dish("0173a261-be83-4e9c-914f-eacfdaba46a8", 1, product3);
+        dishRepo.save(dish3);
+
+        MenuItem menuItem1 = TestUtils.menuItem("3deb5633-e968-4bdc-a114-cd4430a4f003", "Zestaw odbiadowy szefa kuchni", new BigDecimal("20.00"),
+                VatTax._23, new BigDecimal("24.60"), restaurant, dish1, dish2, dish3);
+        menuItemRepo.save(menuItem1);
+
+        OrderItem orderItem = TestUtils.orderItem("1f4fa012-cd0b-4ae0-bbc0-040d73d75b6c", 2, menuItem1);
+        orderItemRepo.save(orderItem);
+
+        Order order = TestUtils.order(STR_UUID, null, "Poproszę bez panierki", user,
+                deliverer, deliveryAddress, restaurant, new BigDecimal("40.00"), new BigDecimal("49.20"), new BigDecimal("49.20"),
+                TestUtils.orderStatus("2020-01-01T15:00:00Z", false, null, null),
+                orderItem
+        );
+        orderRepo.save(order);
+
+        orderController.patchIsPaid(UUID.fromString(STR_UUID));
+
+        OrderDTO orderDB = orderService.getByUuid(UUID.fromString(STR_UUID)).orElseThrow();
+        assert orderDB.getOrderStatusDTO().getPaid();
+    }
+
+    // error while paying for order with not enough founds
+    @Test
+    @Transactional
+    public void setIsPaid2() {
+        Restaurant restaurant = TestUtils.restaurant("087c502c-559b-4d81-ae53-e67ab6fdf995", "MakJson",
+                TestUtils.loginData("mcJson123", "bigDag123!"),
+                TestUtils.companyData("MakJson sp. z zoo",
+                        TestUtils.address("St. Patric", "152", "00-000", "NY"),
+                        "123-010-00-11", "123123123", "+48 501 502 503", "MJ@gmail.com"), Archive.CURRENT);
+        restaurantRepo.save(restaurant);
+
+        Deliverer deliverer = TestUtils.deliverer("cb093f68-f4f1-4f21-a094-5850150b42dd",
+                TestUtils.personalData("John", "Smith", Sex.MALE, "501-501-501", "jh512@gmail.com"),
+                TestUtils.loginData("jSmith", "I@mIronM@n12"), Archive.CURRENT);
+        delivererRepo.save(deliverer);
+
+        User user = TestUtils.user("9986208e-961a-48d4-bf7a-112c627779c2", TestUtils.personalData("John", "Smith", Sex.MALE, "501-501-501", "jh512@gmail.com"), null,
+                TestUtils.loginData("jSmith1", "I@mIronM@n121"), Archive.CURRENT);
+        userRepo.save(user);
+
+        DeliveryAddress deliveryAddress = TestUtils.deliveryAddress("6d66a218-f493-41ee-8291-a0065fab5cfe", null, "Jana Pawła", "1",
+                "", "00-010", "Warszawa", null, "PL", null, user);
+        deliveryAddressRepo.save(deliveryAddress);
+
+        OperationEvidence operationEvidence = TestUtils.operationEvidence("2020-01-01T14:00:15Z", EvidenceType.DEPOSIT, new BigDecimal("10.00"), user);
+        operationEvidenceRepo.save(operationEvidence);
+
+        Ingredient ingredient1 = TestUtils.ingredient("ac30a0fe-f97b-4b08-aaac-1309c76c5455", "Kurczak", true);
+        ingredientRepo.save(ingredient1);
+        Ingredient ingredient2 = TestUtils.ingredient("5632de5e-5c00-463b-b701-152fb76daea3", "Mąka", false);
+        ingredientRepo.save(ingredient2);
+        Ingredient ingredient3 = TestUtils.ingredient("5a1e100b-b82d-42bb-b34f-fc1c3497f9c8", "Kukurydza", true);
+        ingredientRepo.save(ingredient3);
+        Ingredient ingredient4 = TestUtils.ingredient("6b1e5fdc-d771-423e-b968-46e5a03a8200", "Ziemniak", false);
+        ingredientRepo.save(ingredient4);
+        Ingredient ingredient5 = TestUtils.ingredient("e7cec9d4-cdf3-4b32-b2f4-9b90f41a8d05", "Masło", false);
+        ingredientRepo.save(ingredient5);
+        Ingredient ingredient6 = TestUtils.ingredient("dc0ff645-2596-4c7d-a6fa-6926db65be16", "Marchew", false);
+        ingredientRepo.save(ingredient6);
+        Ingredient ingredient7 = TestUtils.ingredient("8ede3563-edd0-4d8b-b121-dd21dd11b7b6", "Jabłko", false);
+        ingredientRepo.save(ingredient7);
+
+        Product product1 = TestUtils.product("19e1281b-949d-48c3-9486-c0abbf7a0267", "Udko korczaka", ingredient1, ingredient2, ingredient3);
+        productRepo.save(product1);
+        Product product2 = TestUtils.product("e192ce71-75a9-4778-82c8-0bff97a98879", "Ziemniak", ingredient4, ingredient5);
+        productRepo.save(product2);
+        Product product3 = TestUtils.product("2af0b1a3-e2be-4e16-bc8b-b5ff4355b44a", "Surówka", ingredient6, ingredient7);
+        productRepo.save(product3);
+
+        Dish dish1 = TestUtils.dish("b9820ee0-c4b8-4ed8-90f7-7fa947f72548", 1, product1);
+        dishRepo.save(dish1);
+        Dish dish2 = TestUtils.dish("74e078d9-f49f-4c53-be67-f9f4cbe5804f", 3, product2);
+        dishRepo.save(dish2);
+        Dish dish3 = TestUtils.dish("0173a261-be83-4e9c-914f-eacfdaba46a8", 1, product3);
+        dishRepo.save(dish3);
+
+        MenuItem menuItem1 = TestUtils.menuItem("3deb5633-e968-4bdc-a114-cd4430a4f003", "Zestaw odbiadowy szefa kuchni", new BigDecimal("20.00"),
+                VatTax._23, new BigDecimal("24.60"), restaurant, dish1, dish2, dish3);
+        menuItemRepo.save(menuItem1);
+
+        OrderItem orderItem = TestUtils.orderItem("1f4fa012-cd0b-4ae0-bbc0-040d73d75b6c", 2, menuItem1);
+        orderItemRepo.save(orderItem);
+
+        Order order = TestUtils.order(STR_UUID, null, "Poproszę bez panierki", user,
+                deliverer, deliveryAddress, restaurant, new BigDecimal("40.00"), new BigDecimal("49.20"), new BigDecimal("49.20"),
+                TestUtils.orderStatus("2020-01-01T15:00:00Z", false, null, null),
+                orderItem
+        );
+        orderRepo.save(order);
+
+        Assertions.assertThrows(ResponseStatusException.class, () -> orderController.patchIsPaid(UUID.fromString(STR_UUID)));
+    }
+
+    // giving out an order
+    @Test
+    @Transactional
+    public void setIsGivedOut1() {
+        Restaurant restaurant = TestUtils.restaurant("087c502c-559b-4d81-ae53-e67ab6fdf995", "MakJson",
+                TestUtils.loginData("mcJson123", "bigDag123!"),
+                TestUtils.companyData("MakJson sp. z zoo",
+                        TestUtils.address("St. Patric", "152", "00-000", "NY"),
+                        "123-010-00-11", "123123123", "+48 501 502 503", "MJ@gmail.com"), Archive.CURRENT);
+        restaurantRepo.save(restaurant);
+
+        Deliverer deliverer = TestUtils.deliverer("cb093f68-f4f1-4f21-a094-5850150b42dd",
+                TestUtils.personalData("John", "Smith", Sex.MALE, "501-501-501", "jh512@gmail.com"),
+                TestUtils.loginData("jSmith", "I@mIronM@n12"), Archive.CURRENT);
+        delivererRepo.save(deliverer);
+
+        User user = TestUtils.user("9986208e-961a-48d4-bf7a-112c627779c2", TestUtils.personalData("John", "Smith", Sex.MALE, "501-501-501", "jh512@gmail.com"), null,
+                TestUtils.loginData("jSmith1", "I@mIronM@n121"), Archive.CURRENT);
+        userRepo.save(user);
+
+        DeliveryAddress deliveryAddress = TestUtils.deliveryAddress("6d66a218-f493-41ee-8291-a0065fab5cfe", null, "Jana Pawła", "1",
+                "", "00-010", "Warszawa", null, "PL", null, user);
+        deliveryAddressRepo.save(deliveryAddress);
+
+        OperationEvidence operationEvidence = TestUtils.operationEvidence("2020-01-01T14:00:15Z", EvidenceType.DEPOSIT, new BigDecimal("50.00"), user);
+        operationEvidenceRepo.save(operationEvidence);
+        OperationEvidence operationEvidence2 = TestUtils.operationEvidence("2020-01-01T15:00:15Z", EvidenceType.PAYMENT, new BigDecimal("49.20"), user);
+        operationEvidenceRepo.save(operationEvidence2);
+
+        Ingredient ingredient1 = TestUtils.ingredient("ac30a0fe-f97b-4b08-aaac-1309c76c5455", "Kurczak", true);
+        ingredientRepo.save(ingredient1);
+        Ingredient ingredient2 = TestUtils.ingredient("5632de5e-5c00-463b-b701-152fb76daea3", "Mąka", false);
+        ingredientRepo.save(ingredient2);
+        Ingredient ingredient3 = TestUtils.ingredient("5a1e100b-b82d-42bb-b34f-fc1c3497f9c8", "Kukurydza", true);
+        ingredientRepo.save(ingredient3);
+        Ingredient ingredient4 = TestUtils.ingredient("6b1e5fdc-d771-423e-b968-46e5a03a8200", "Ziemniak", false);
+        ingredientRepo.save(ingredient4);
+        Ingredient ingredient5 = TestUtils.ingredient("e7cec9d4-cdf3-4b32-b2f4-9b90f41a8d05", "Masło", false);
+        ingredientRepo.save(ingredient5);
+        Ingredient ingredient6 = TestUtils.ingredient("dc0ff645-2596-4c7d-a6fa-6926db65be16", "Marchew", false);
+        ingredientRepo.save(ingredient6);
+        Ingredient ingredient7 = TestUtils.ingredient("8ede3563-edd0-4d8b-b121-dd21dd11b7b6", "Jabłko", false);
+        ingredientRepo.save(ingredient7);
+
+        Product product1 = TestUtils.product("19e1281b-949d-48c3-9486-c0abbf7a0267", "Udko korczaka", ingredient1, ingredient2, ingredient3);
+        productRepo.save(product1);
+        Product product2 = TestUtils.product("e192ce71-75a9-4778-82c8-0bff97a98879", "Ziemniak", ingredient4, ingredient5);
+        productRepo.save(product2);
+        Product product3 = TestUtils.product("2af0b1a3-e2be-4e16-bc8b-b5ff4355b44a", "Surówka", ingredient6, ingredient7);
+        productRepo.save(product3);
+
+        Dish dish1 = TestUtils.dish("b9820ee0-c4b8-4ed8-90f7-7fa947f72548", 1, product1);
+        dishRepo.save(dish1);
+        Dish dish2 = TestUtils.dish("74e078d9-f49f-4c53-be67-f9f4cbe5804f", 3, product2);
+        dishRepo.save(dish2);
+        Dish dish3 = TestUtils.dish("0173a261-be83-4e9c-914f-eacfdaba46a8", 1, product3);
+        dishRepo.save(dish3);
+
+        MenuItem menuItem1 = TestUtils.menuItem("3deb5633-e968-4bdc-a114-cd4430a4f003", "Zestaw odbiadowy szefa kuchni", new BigDecimal("20.00"),
+                VatTax._23, new BigDecimal("24.60"), restaurant, dish1, dish2, dish3);
+        menuItemRepo.save(menuItem1);
+
+        OrderItem orderItem = TestUtils.orderItem("1f4fa012-cd0b-4ae0-bbc0-040d73d75b6c", 2, menuItem1);
+        orderItemRepo.save(orderItem);
+
+        Order order = TestUtils.order(STR_UUID, null, "Poproszę bez panierki", user,
+                deliverer, deliveryAddress, restaurant, new BigDecimal("40.00"), new BigDecimal("49.20"), new BigDecimal("49.20"),
+                TestUtils.orderStatus("2020-01-01T15:00:00Z", true, null, null),
+                orderItem
+        );
+        orderRepo.save(order);
+
+        OrderStatusDTO orderStatusJson =
+                TestUtils.orderStatusDTO("2020-01-01T15:00:00Z", true, "2020-01-01T15:30:00Z", null);
+        orderController.patchIsGivenOut(UUID.fromString(STR_UUID), orderStatusJson);
+
+        OrderDTO orderDB = orderService.getByUuid(UUID.fromString(STR_UUID)).orElseThrow();
+        Assertions.assertEquals(orderDB.getOrderStatusDTO().getGiveOutTime(), orderStatusJson.getGiveOutTime());
+    }
+
+    // error setting an order as given out while it is not paid
+    @Test
+    @Transactional
+    public void setIsGivedOut2() {
+        Restaurant restaurant = TestUtils.restaurant("087c502c-559b-4d81-ae53-e67ab6fdf995", "MakJson",
+                TestUtils.loginData("mcJson123", "bigDag123!"),
+                TestUtils.companyData("MakJson sp. z zoo",
+                        TestUtils.address("St. Patric", "152", "00-000", "NY"),
+                        "123-010-00-11", "123123123", "+48 501 502 503", "MJ@gmail.com"), Archive.CURRENT);
+        restaurantRepo.save(restaurant);
+
+        Deliverer deliverer = TestUtils.deliverer("cb093f68-f4f1-4f21-a094-5850150b42dd",
+                TestUtils.personalData("John", "Smith", Sex.MALE, "501-501-501", "jh512@gmail.com"),
+                TestUtils.loginData("jSmith", "I@mIronM@n12"), Archive.CURRENT);
+        delivererRepo.save(deliverer);
+
+        User user = TestUtils.user("9986208e-961a-48d4-bf7a-112c627779c2", TestUtils.personalData("John", "Smith", Sex.MALE, "501-501-501", "jh512@gmail.com"), null,
+                TestUtils.loginData("jSmith1", "I@mIronM@n121"), Archive.CURRENT);
+        userRepo.save(user);
+
+        DeliveryAddress deliveryAddress = TestUtils.deliveryAddress("6d66a218-f493-41ee-8291-a0065fab5cfe", null, "Jana Pawła", "1",
+                "", "00-010", "Warszawa", null, "PL", null, user);
+        deliveryAddressRepo.save(deliveryAddress);
+
+        OperationEvidence operationEvidence = TestUtils.operationEvidence("2020-01-01T14:00:15Z", EvidenceType.DEPOSIT, new BigDecimal("50.00"), user);
+        operationEvidenceRepo.save(operationEvidence);
+
+        Ingredient ingredient1 = TestUtils.ingredient("ac30a0fe-f97b-4b08-aaac-1309c76c5455", "Kurczak", true);
+        ingredientRepo.save(ingredient1);
+        Ingredient ingredient2 = TestUtils.ingredient("5632de5e-5c00-463b-b701-152fb76daea3", "Mąka", false);
+        ingredientRepo.save(ingredient2);
+        Ingredient ingredient3 = TestUtils.ingredient("5a1e100b-b82d-42bb-b34f-fc1c3497f9c8", "Kukurydza", true);
+        ingredientRepo.save(ingredient3);
+        Ingredient ingredient4 = TestUtils.ingredient("6b1e5fdc-d771-423e-b968-46e5a03a8200", "Ziemniak", false);
+        ingredientRepo.save(ingredient4);
+        Ingredient ingredient5 = TestUtils.ingredient("e7cec9d4-cdf3-4b32-b2f4-9b90f41a8d05", "Masło", false);
+        ingredientRepo.save(ingredient5);
+        Ingredient ingredient6 = TestUtils.ingredient("dc0ff645-2596-4c7d-a6fa-6926db65be16", "Marchew", false);
+        ingredientRepo.save(ingredient6);
+        Ingredient ingredient7 = TestUtils.ingredient("8ede3563-edd0-4d8b-b121-dd21dd11b7b6", "Jabłko", false);
+        ingredientRepo.save(ingredient7);
+
+        Product product1 = TestUtils.product("19e1281b-949d-48c3-9486-c0abbf7a0267", "Udko korczaka", ingredient1, ingredient2, ingredient3);
+        productRepo.save(product1);
+        Product product2 = TestUtils.product("e192ce71-75a9-4778-82c8-0bff97a98879", "Ziemniak", ingredient4, ingredient5);
+        productRepo.save(product2);
+        Product product3 = TestUtils.product("2af0b1a3-e2be-4e16-bc8b-b5ff4355b44a", "Surówka", ingredient6, ingredient7);
+        productRepo.save(product3);
+
+        Dish dish1 = TestUtils.dish("b9820ee0-c4b8-4ed8-90f7-7fa947f72548", 1, product1);
+        dishRepo.save(dish1);
+        Dish dish2 = TestUtils.dish("74e078d9-f49f-4c53-be67-f9f4cbe5804f", 3, product2);
+        dishRepo.save(dish2);
+        Dish dish3 = TestUtils.dish("0173a261-be83-4e9c-914f-eacfdaba46a8", 1, product3);
+        dishRepo.save(dish3);
+
+        MenuItem menuItem1 = TestUtils.menuItem("3deb5633-e968-4bdc-a114-cd4430a4f003", "Zestaw odbiadowy szefa kuchni", new BigDecimal("20.00"),
+                VatTax._23, new BigDecimal("24.60"), restaurant, dish1, dish2, dish3);
+        menuItemRepo.save(menuItem1);
+
+        OrderItem orderItem = TestUtils.orderItem("1f4fa012-cd0b-4ae0-bbc0-040d73d75b6c", 2, menuItem1);
+        orderItemRepo.save(orderItem);
+
+        Order order = TestUtils.order(STR_UUID, null, "Poproszę bez panierki", user,
+                deliverer, deliveryAddress, restaurant, new BigDecimal("40.00"), new BigDecimal("49.20"), new BigDecimal("49.20"),
+                TestUtils.orderStatus("2020-01-01T15:00:00Z", false, null, null),
+                orderItem
+        );
+        orderRepo.save(order);
+
+        OrderStatusDTO orderStatusJson =
+                TestUtils.orderStatusDTO("2020-01-01T15:00:00Z", true, "2020-01-01T15:30:00Z", null);
+        Assertions.assertThrows(ResponseStatusException.class, () -> orderController.patchIsGivenOut(UUID.fromString(STR_UUID), orderStatusJson));
+    }
+
+    // order delivered
+    @Test
+    @Transactional
+    public void setIsDelivered1() {
+        Restaurant restaurant = TestUtils.restaurant("087c502c-559b-4d81-ae53-e67ab6fdf995", "MakJson",
+                TestUtils.loginData("mcJson123", "bigDag123!"),
+                TestUtils.companyData("MakJson sp. z zoo",
+                        TestUtils.address("St. Patric", "152", "00-000", "NY"),
+                        "123-010-00-11", "123123123", "+48 501 502 503", "MJ@gmail.com"), Archive.CURRENT);
+        restaurantRepo.save(restaurant);
+
+        Deliverer deliverer = TestUtils.deliverer("cb093f68-f4f1-4f21-a094-5850150b42dd",
+                TestUtils.personalData("John", "Smith", Sex.MALE, "501-501-501", "jh512@gmail.com"),
+                TestUtils.loginData("jSmith", "I@mIronM@n12"), Archive.CURRENT);
+        delivererRepo.save(deliverer);
+
+        User user = TestUtils.user("9986208e-961a-48d4-bf7a-112c627779c2", TestUtils.personalData("John", "Smith", Sex.MALE, "501-501-501", "jh512@gmail.com"), null,
+                TestUtils.loginData("jSmith1", "I@mIronM@n121"), Archive.CURRENT);
+        userRepo.save(user);
+
+        DeliveryAddress deliveryAddress = TestUtils.deliveryAddress("6d66a218-f493-41ee-8291-a0065fab5cfe", null, "Jana Pawła", "1",
+                "", "00-010", "Warszawa", null, "PL", null, user);
+        deliveryAddressRepo.save(deliveryAddress);
+
+        OperationEvidence operationEvidence = TestUtils.operationEvidence("2020-01-01T14:00:15Z", EvidenceType.DEPOSIT, new BigDecimal("50.00"), user);
+        operationEvidenceRepo.save(operationEvidence);
+        OperationEvidence operationEvidence2 = TestUtils.operationEvidence("2020-01-01T15:00:15Z", EvidenceType.PAYMENT, new BigDecimal("49.20"), user);
+        operationEvidenceRepo.save(operationEvidence2);
+
+        Ingredient ingredient1 = TestUtils.ingredient("ac30a0fe-f97b-4b08-aaac-1309c76c5455", "Kurczak", true);
+        ingredientRepo.save(ingredient1);
+        Ingredient ingredient2 = TestUtils.ingredient("5632de5e-5c00-463b-b701-152fb76daea3", "Mąka", false);
+        ingredientRepo.save(ingredient2);
+        Ingredient ingredient3 = TestUtils.ingredient("5a1e100b-b82d-42bb-b34f-fc1c3497f9c8", "Kukurydza", true);
+        ingredientRepo.save(ingredient3);
+        Ingredient ingredient4 = TestUtils.ingredient("6b1e5fdc-d771-423e-b968-46e5a03a8200", "Ziemniak", false);
+        ingredientRepo.save(ingredient4);
+        Ingredient ingredient5 = TestUtils.ingredient("e7cec9d4-cdf3-4b32-b2f4-9b90f41a8d05", "Masło", false);
+        ingredientRepo.save(ingredient5);
+        Ingredient ingredient6 = TestUtils.ingredient("dc0ff645-2596-4c7d-a6fa-6926db65be16", "Marchew", false);
+        ingredientRepo.save(ingredient6);
+        Ingredient ingredient7 = TestUtils.ingredient("8ede3563-edd0-4d8b-b121-dd21dd11b7b6", "Jabłko", false);
+        ingredientRepo.save(ingredient7);
+
+        Product product1 = TestUtils.product("19e1281b-949d-48c3-9486-c0abbf7a0267", "Udko korczaka", ingredient1, ingredient2, ingredient3);
+        productRepo.save(product1);
+        Product product2 = TestUtils.product("e192ce71-75a9-4778-82c8-0bff97a98879", "Ziemniak", ingredient4, ingredient5);
+        productRepo.save(product2);
+        Product product3 = TestUtils.product("2af0b1a3-e2be-4e16-bc8b-b5ff4355b44a", "Surówka", ingredient6, ingredient7);
+        productRepo.save(product3);
+
+        Dish dish1 = TestUtils.dish("b9820ee0-c4b8-4ed8-90f7-7fa947f72548", 1, product1);
+        dishRepo.save(dish1);
+        Dish dish2 = TestUtils.dish("74e078d9-f49f-4c53-be67-f9f4cbe5804f", 3, product2);
+        dishRepo.save(dish2);
+        Dish dish3 = TestUtils.dish("0173a261-be83-4e9c-914f-eacfdaba46a8", 1, product3);
+        dishRepo.save(dish3);
+
+        MenuItem menuItem1 = TestUtils.menuItem("3deb5633-e968-4bdc-a114-cd4430a4f003", "Zestaw odbiadowy szefa kuchni", new BigDecimal("20.00"),
+                VatTax._23, new BigDecimal("24.60"), restaurant, dish1, dish2, dish3);
+        menuItemRepo.save(menuItem1);
+
+        OrderItem orderItem = TestUtils.orderItem("1f4fa012-cd0b-4ae0-bbc0-040d73d75b6c", 2, menuItem1);
+        orderItemRepo.save(orderItem);
+
+        Order order = TestUtils.order(STR_UUID, null, "Poproszę bez panierki", user,
+                deliverer, deliveryAddress, restaurant, new BigDecimal("40.00"), new BigDecimal("49.20"), new BigDecimal("49.20"),
+                TestUtils.orderStatus("2020-01-01T15:00:00Z", true, "2020-01-01T16:00:00Z", null),
+                orderItem
+        );
+        orderRepo.save(order);
+
+        OrderStatusDTO orderStatusJson =
+                TestUtils.orderStatusDTO("2020-01-01T15:00:00Z", true, "2020-01-01T16:00:00Z", "2020-01-01T16:30:00Z");
+        orderController.patchIsDelivered(UUID.fromString(STR_UUID), orderStatusJson);
+
+        OrderDTO orderDB = orderService.getByUuid(UUID.fromString(STR_UUID)).orElseThrow();
+        Assertions.assertEquals(orderDB.getOrderStatusDTO().getDeliveryTime(), orderStatusJson.getDeliveryTime());
+    }
+
+    // error setting an order as delivered while it is not paid
+    @Test
+    @Transactional
+    public void setIsDelivered2() {
+        Restaurant restaurant = TestUtils.restaurant("087c502c-559b-4d81-ae53-e67ab6fdf995", "MakJson",
+                TestUtils.loginData("mcJson123", "bigDag123!"),
+                TestUtils.companyData("MakJson sp. z zoo",
+                        TestUtils.address("St. Patric", "152", "00-000", "NY"),
+                        "123-010-00-11", "123123123", "+48 501 502 503", "MJ@gmail.com"), Archive.CURRENT);
+        restaurantRepo.save(restaurant);
+
+        Deliverer deliverer = TestUtils.deliverer("cb093f68-f4f1-4f21-a094-5850150b42dd",
+                TestUtils.personalData("John", "Smith", Sex.MALE, "501-501-501", "jh512@gmail.com"),
+                TestUtils.loginData("jSmith", "I@mIronM@n12"), Archive.CURRENT);
+        delivererRepo.save(deliverer);
+
+        User user = TestUtils.user("9986208e-961a-48d4-bf7a-112c627779c2", TestUtils.personalData("John", "Smith", Sex.MALE, "501-501-501", "jh512@gmail.com"), null,
+                TestUtils.loginData("jSmith1", "I@mIronM@n121"), Archive.CURRENT);
+        userRepo.save(user);
+
+        DeliveryAddress deliveryAddress = TestUtils.deliveryAddress("6d66a218-f493-41ee-8291-a0065fab5cfe", null, "Jana Pawła", "1",
+                "", "00-010", "Warszawa", null, "PL", null, user);
+        deliveryAddressRepo.save(deliveryAddress);
+
+        OperationEvidence operationEvidence = TestUtils.operationEvidence("2020-01-01T14:00:15Z", EvidenceType.DEPOSIT, new BigDecimal("50.00"), user);
+        operationEvidenceRepo.save(operationEvidence);
+
+        Ingredient ingredient1 = TestUtils.ingredient("ac30a0fe-f97b-4b08-aaac-1309c76c5455", "Kurczak", true);
+        ingredientRepo.save(ingredient1);
+        Ingredient ingredient2 = TestUtils.ingredient("5632de5e-5c00-463b-b701-152fb76daea3", "Mąka", false);
+        ingredientRepo.save(ingredient2);
+        Ingredient ingredient3 = TestUtils.ingredient("5a1e100b-b82d-42bb-b34f-fc1c3497f9c8", "Kukurydza", true);
+        ingredientRepo.save(ingredient3);
+        Ingredient ingredient4 = TestUtils.ingredient("6b1e5fdc-d771-423e-b968-46e5a03a8200", "Ziemniak", false);
+        ingredientRepo.save(ingredient4);
+        Ingredient ingredient5 = TestUtils.ingredient("e7cec9d4-cdf3-4b32-b2f4-9b90f41a8d05", "Masło", false);
+        ingredientRepo.save(ingredient5);
+        Ingredient ingredient6 = TestUtils.ingredient("dc0ff645-2596-4c7d-a6fa-6926db65be16", "Marchew", false);
+        ingredientRepo.save(ingredient6);
+        Ingredient ingredient7 = TestUtils.ingredient("8ede3563-edd0-4d8b-b121-dd21dd11b7b6", "Jabłko", false);
+        ingredientRepo.save(ingredient7);
+
+        Product product1 = TestUtils.product("19e1281b-949d-48c3-9486-c0abbf7a0267", "Udko korczaka", ingredient1, ingredient2, ingredient3);
+        productRepo.save(product1);
+        Product product2 = TestUtils.product("e192ce71-75a9-4778-82c8-0bff97a98879", "Ziemniak", ingredient4, ingredient5);
+        productRepo.save(product2);
+        Product product3 = TestUtils.product("2af0b1a3-e2be-4e16-bc8b-b5ff4355b44a", "Surówka", ingredient6, ingredient7);
+        productRepo.save(product3);
+
+        Dish dish1 = TestUtils.dish("b9820ee0-c4b8-4ed8-90f7-7fa947f72548", 1, product1);
+        dishRepo.save(dish1);
+        Dish dish2 = TestUtils.dish("74e078d9-f49f-4c53-be67-f9f4cbe5804f", 3, product2);
+        dishRepo.save(dish2);
+        Dish dish3 = TestUtils.dish("0173a261-be83-4e9c-914f-eacfdaba46a8", 1, product3);
+        dishRepo.save(dish3);
+
+        MenuItem menuItem1 = TestUtils.menuItem("3deb5633-e968-4bdc-a114-cd4430a4f003", "Zestaw odbiadowy szefa kuchni", new BigDecimal("20.00"),
+                VatTax._23, new BigDecimal("24.60"), restaurant, dish1, dish2, dish3);
+        menuItemRepo.save(menuItem1);
+
+        OrderItem orderItem = TestUtils.orderItem("1f4fa012-cd0b-4ae0-bbc0-040d73d75b6c", 2, menuItem1);
+        orderItemRepo.save(orderItem);
+
+        Order order = TestUtils.order(STR_UUID, null, "Poproszę bez panierki", user,
+                deliverer, deliveryAddress, restaurant, new BigDecimal("40.00"), new BigDecimal("49.20"), new BigDecimal("49.20"),
+                TestUtils.orderStatus("2020-01-01T15:00:00Z", false, null, null),
+                orderItem
+        );
+        orderRepo.save(order);
+
+        OrderStatusDTO orderStatusJson =
+                TestUtils.orderStatusDTO("2020-01-01T15:00:00Z", true, "2020-01-01T16:00:00Z", "2020-01-01T16:30:00Z");
+        Assertions.assertThrows(ResponseStatusException.class, () -> orderController.patchIsDelivered(UUID.fromString(STR_UUID), orderStatusJson));
+    }
+
+    // error setting an order as delivered while it is not given out
+    @Test
+    @Transactional
+    public void setIsDelivered3() {
+        Restaurant restaurant = TestUtils.restaurant("087c502c-559b-4d81-ae53-e67ab6fdf995", "MakJson",
+                TestUtils.loginData("mcJson123", "bigDag123!"),
+                TestUtils.companyData("MakJson sp. z zoo",
+                        TestUtils.address("St. Patric", "152", "00-000", "NY"),
+                        "123-010-00-11", "123123123", "+48 501 502 503", "MJ@gmail.com"), Archive.CURRENT);
+        restaurantRepo.save(restaurant);
+
+        Deliverer deliverer = TestUtils.deliverer("cb093f68-f4f1-4f21-a094-5850150b42dd",
+                TestUtils.personalData("John", "Smith", Sex.MALE, "501-501-501", "jh512@gmail.com"),
+                TestUtils.loginData("jSmith", "I@mIronM@n12"), Archive.CURRENT);
+        delivererRepo.save(deliverer);
+
+        User user = TestUtils.user("9986208e-961a-48d4-bf7a-112c627779c2", TestUtils.personalData("John", "Smith", Sex.MALE, "501-501-501", "jh512@gmail.com"), null,
+                TestUtils.loginData("jSmith1", "I@mIronM@n121"), Archive.CURRENT);
+        userRepo.save(user);
+
+        DeliveryAddress deliveryAddress = TestUtils.deliveryAddress("6d66a218-f493-41ee-8291-a0065fab5cfe", null, "Jana Pawła", "1",
+                "", "00-010", "Warszawa", null, "PL", null, user);
+        deliveryAddressRepo.save(deliveryAddress);
+
+        OperationEvidence operationEvidence = TestUtils.operationEvidence("2020-01-01T14:00:15Z", EvidenceType.DEPOSIT, new BigDecimal("50.00"), user);
+        operationEvidenceRepo.save(operationEvidence);
+        OperationEvidence operationEvidence2 = TestUtils.operationEvidence("2020-01-01T15:00:15Z", EvidenceType.PAYMENT, new BigDecimal("49.20"), user);
+        operationEvidenceRepo.save(operationEvidence2);
+
+        Ingredient ingredient1 = TestUtils.ingredient("ac30a0fe-f97b-4b08-aaac-1309c76c5455", "Kurczak", true);
+        ingredientRepo.save(ingredient1);
+        Ingredient ingredient2 = TestUtils.ingredient("5632de5e-5c00-463b-b701-152fb76daea3", "Mąka", false);
+        ingredientRepo.save(ingredient2);
+        Ingredient ingredient3 = TestUtils.ingredient("5a1e100b-b82d-42bb-b34f-fc1c3497f9c8", "Kukurydza", true);
+        ingredientRepo.save(ingredient3);
+        Ingredient ingredient4 = TestUtils.ingredient("6b1e5fdc-d771-423e-b968-46e5a03a8200", "Ziemniak", false);
+        ingredientRepo.save(ingredient4);
+        Ingredient ingredient5 = TestUtils.ingredient("e7cec9d4-cdf3-4b32-b2f4-9b90f41a8d05", "Masło", false);
+        ingredientRepo.save(ingredient5);
+        Ingredient ingredient6 = TestUtils.ingredient("dc0ff645-2596-4c7d-a6fa-6926db65be16", "Marchew", false);
+        ingredientRepo.save(ingredient6);
+        Ingredient ingredient7 = TestUtils.ingredient("8ede3563-edd0-4d8b-b121-dd21dd11b7b6", "Jabłko", false);
+        ingredientRepo.save(ingredient7);
+
+        Product product1 = TestUtils.product("19e1281b-949d-48c3-9486-c0abbf7a0267", "Udko korczaka", ingredient1, ingredient2, ingredient3);
+        productRepo.save(product1);
+        Product product2 = TestUtils.product("e192ce71-75a9-4778-82c8-0bff97a98879", "Ziemniak", ingredient4, ingredient5);
+        productRepo.save(product2);
+        Product product3 = TestUtils.product("2af0b1a3-e2be-4e16-bc8b-b5ff4355b44a", "Surówka", ingredient6, ingredient7);
+        productRepo.save(product3);
+
+        Dish dish1 = TestUtils.dish("b9820ee0-c4b8-4ed8-90f7-7fa947f72548", 1, product1);
+        dishRepo.save(dish1);
+        Dish dish2 = TestUtils.dish("74e078d9-f49f-4c53-be67-f9f4cbe5804f", 3, product2);
+        dishRepo.save(dish2);
+        Dish dish3 = TestUtils.dish("0173a261-be83-4e9c-914f-eacfdaba46a8", 1, product3);
+        dishRepo.save(dish3);
+
+        MenuItem menuItem1 = TestUtils.menuItem("3deb5633-e968-4bdc-a114-cd4430a4f003", "Zestaw odbiadowy szefa kuchni", new BigDecimal("20.00"),
+                VatTax._23, new BigDecimal("24.60"), restaurant, dish1, dish2, dish3);
+        menuItemRepo.save(menuItem1);
+
+        OrderItem orderItem = TestUtils.orderItem("1f4fa012-cd0b-4ae0-bbc0-040d73d75b6c", 2, menuItem1);
+        orderItemRepo.save(orderItem);
+
+        Order order = TestUtils.order(STR_UUID, null, "Poproszę bez panierki", user,
+                deliverer, deliveryAddress, restaurant, new BigDecimal("40.00"), new BigDecimal("49.20"), new BigDecimal("49.20"),
+                TestUtils.orderStatus("2020-01-01T15:00:00Z", true, null, null),
+                orderItem
+        );
+        orderRepo.save(order);
+
+        OrderStatusDTO orderStatusJson =
+                TestUtils.orderStatusDTO("2020-01-01T15:00:00Z", true, "2020-01-01T16:00:00Z", "2020-01-01T16:30:00Z");
+        Assertions.assertThrows(ResponseStatusException.class, () -> orderController.patchIsDelivered(UUID.fromString(STR_UUID), orderStatusJson));
+    }
+
+    // delete order that is not paid
+    @Test
+    @Transactional
+    public void delete1() {
+        TransactionStatus transaction1 = txManager.getTransaction(TransactionDefinition.withDefaults());
+        Restaurant restaurant = TestUtils.restaurant("087c502c-559b-4d81-ae53-e67ab6fdf995", "MakJson",
+                TestUtils.loginData("mcJson123", "bigDag123!"),
+                TestUtils.companyData("MakJson sp. z zoo",
+                        TestUtils.address("St. Patric", "152", "00-000", "NY"),
+                        "123-010-00-11", "123123123", "+48 501 502 503", "MJ@gmail.com"), Archive.CURRENT);
+        restaurantRepo.save(restaurant);
+
+        Deliverer deliverer1 = TestUtils.deliverer("cb093f68-f4f1-4f21-a094-5850150b42dd",
+                TestUtils.personalData("John", "Smith", Sex.MALE, "501-501-501", "jh512@gmail.com"),
+                TestUtils.loginData("jSmith", "I@mIronM@n12"), Archive.CURRENT);
+        delivererRepo.save(deliverer1);
+        Deliverer deliverer2 = TestUtils.deliverer("9f15cfc3-2568-4fe3-8f94-034a23c9df6f",
+                TestUtils.personalData("John", "Smith", Sex.MALE, "501-501-501", "jh512@gmail.com"),
+                TestUtils.loginData("jSmith3", "I@mIronM@n12"), Archive.CURRENT);
+        delivererRepo.save(deliverer2);
+
+        User user = TestUtils.user("9986208e-961a-48d4-bf7a-112c627779c2", TestUtils.personalData("John", "Smith", Sex.MALE, "501-501-501", "jh512@gmail.com"), null,
+                TestUtils.loginData("jSmith1", "I@mIronM@n121"), Archive.CURRENT);
+        userRepo.save(user);
+
+        DeliveryAddress deliveryAddress = TestUtils.deliveryAddress("6d66a218-f493-41ee-8291-a0065fab5cfe", null, "Jana Pawła", "1",
+                "", "00-010", "Warszawa", null, "PL", null, user);
+        deliveryAddressRepo.save(deliveryAddress);
+
+        Ingredient ingredient1 = TestUtils.ingredient("ac30a0fe-f97b-4b08-aaac-1309c76c5455", "Kurczak", true);
+        ingredientRepo.save(ingredient1);
+        Ingredient ingredient2 = TestUtils.ingredient("5632de5e-5c00-463b-b701-152fb76daea3", "Mąka", false);
+        ingredientRepo.save(ingredient2);
+        Ingredient ingredient3 = TestUtils.ingredient("5a1e100b-b82d-42bb-b34f-fc1c3497f9c8", "Kukurydza", true);
+        ingredientRepo.save(ingredient3);
+        Ingredient ingredient4 = TestUtils.ingredient("6b1e5fdc-d771-423e-b968-46e5a03a8200", "Ziemniak", false);
+        ingredientRepo.save(ingredient4);
+        Ingredient ingredient5 = TestUtils.ingredient("e7cec9d4-cdf3-4b32-b2f4-9b90f41a8d05", "Masło", false);
+        ingredientRepo.save(ingredient5);
+        Ingredient ingredient6 = TestUtils.ingredient("dc0ff645-2596-4c7d-a6fa-6926db65be16", "Marchew", false);
+        ingredientRepo.save(ingredient6);
+        Ingredient ingredient7 = TestUtils.ingredient("8ede3563-edd0-4d8b-b121-dd21dd11b7b6", "Jabłko", false);
+        ingredientRepo.save(ingredient7);
+
+        Product product1 = TestUtils.product("19e1281b-949d-48c3-9486-c0abbf7a0267", "Udko korczaka", ingredient1, ingredient2, ingredient3);
+        productRepo.save(product1);
+        Product product2 = TestUtils.product("e192ce71-75a9-4778-82c8-0bff97a98879", "Ziemniak", ingredient4, ingredient5);
+        productRepo.save(product2);
+        Product product3 = TestUtils.product("2af0b1a3-e2be-4e16-bc8b-b5ff4355b44a", "Surówka", ingredient6, ingredient7);
+        productRepo.save(product3);
+
+        Dish dish1 = TestUtils.dish("b9820ee0-c4b8-4ed8-90f7-7fa947f72548", 1, product1);
+        dishRepo.save(dish1);
+        Dish dish2 = TestUtils.dish("74e078d9-f49f-4c53-be67-f9f4cbe5804f", 3, product2);
+        dishRepo.save(dish2);
+        Dish dish3 = TestUtils.dish("0173a261-be83-4e9c-914f-eacfdaba46a8", 1, product3);
+        dishRepo.save(dish3);
+
+        MenuItem menuItem1 = TestUtils.menuItem("3deb5633-e968-4bdc-a114-cd4430a4f003", "Zestaw odbiadowy szefa kuchni", new BigDecimal("20.00"),
+                VatTax._23, new BigDecimal("24.60"), restaurant, dish1, dish2, dish3);
+        menuItemRepo.save(menuItem1);
+
+        MenuItem menuItem2 = TestUtils.menuItem("44b2cd38-69eb-4178-b271-0bdef113eeea", "Powiększenie zestawu", new BigDecimal("8.00"),
+                VatTax._23, new BigDecimal("9.84"), restaurant, dish1);
+        menuItemRepo.save(menuItem2);
+
+        OrderItem orderItem = TestUtils.orderItem("1f4fa012-cd0b-4ae0-bbc0-040d73d75b6c", 2, menuItem1);
+        orderItemRepo.save(orderItem);
+
+        Order order = TestUtils.order(STR_UUID, null, "Poproszę bez panierki", user,
+                deliverer1, deliveryAddress, restaurant, new BigDecimal("40.00"), new BigDecimal("49.20"), new BigDecimal("49.20"),
+                TestUtils.orderStatus("2020-01-01T15:00:00Z", false, null, null),
+                orderItem
+        );
+        orderRepo.save(order);
+        txManager.commit(transaction1);
+
+        TransactionStatus transaction2 = txManager.getTransaction(TransactionDefinition.withDefaults());
+        orderController.delete(UUID.fromString(STR_UUID));
+        txManager.commit(transaction2);
+
+        TransactionStatus transaction3 = txManager.getTransaction(TransactionDefinition.withDefaults());
+        Truth8.assertThat(orderService.getByUuid(UUID.fromString(STR_UUID))).isEmpty();
+        txManager.commit(transaction3);
+    }
+
+    // error deleting an order that is paid
+    @Test
+    @Transactional
+    public void delete2() {
+        TransactionStatus transaction1 = txManager.getTransaction(TransactionDefinition.withDefaults());
+        Restaurant restaurant = TestUtils.restaurant("087c502c-559b-4d81-ae53-e67ab6fdf995", "MakJson",
+                TestUtils.loginData("mcJson123", "bigDag123!"),
+                TestUtils.companyData("MakJson sp. z zoo",
+                        TestUtils.address("St. Patric", "152", "00-000", "NY"),
+                        "123-010-00-11", "123123123", "+48 501 502 503", "MJ@gmail.com"), Archive.CURRENT);
+        restaurantRepo.save(restaurant);
+
+        Deliverer deliverer1 = TestUtils.deliverer("cb093f68-f4f1-4f21-a094-5850150b42dd",
+                TestUtils.personalData("John", "Smith", Sex.MALE, "501-501-501", "jh512@gmail.com"),
+                TestUtils.loginData("jSmith", "I@mIronM@n12"), Archive.CURRENT);
+        delivererRepo.save(deliverer1);
+        Deliverer deliverer2 = TestUtils.deliverer("9f15cfc3-2568-4fe3-8f94-034a23c9df6f",
+                TestUtils.personalData("John", "Smith", Sex.MALE, "501-501-501", "jh512@gmail.com"),
+                TestUtils.loginData("jSmith3", "I@mIronM@n12"), Archive.CURRENT);
+        delivererRepo.save(deliverer2);
+
+        User user = TestUtils.user("9986208e-961a-48d4-bf7a-112c627779c2", TestUtils.personalData("John", "Smith", Sex.MALE, "501-501-501", "jh512@gmail.com"), null,
+                TestUtils.loginData("jSmith1", "I@mIronM@n121"), Archive.CURRENT);
+        userRepo.save(user);
+
+        DeliveryAddress deliveryAddress = TestUtils.deliveryAddress("6d66a218-f493-41ee-8291-a0065fab5cfe", null, "Jana Pawła", "1",
+                "", "00-010", "Warszawa", null, "PL", null, user);
+        deliveryAddressRepo.save(deliveryAddress);
+
+        Ingredient ingredient1 = TestUtils.ingredient("ac30a0fe-f97b-4b08-aaac-1309c76c5455", "Kurczak", true);
+        ingredientRepo.save(ingredient1);
+        Ingredient ingredient2 = TestUtils.ingredient("5632de5e-5c00-463b-b701-152fb76daea3", "Mąka", false);
+        ingredientRepo.save(ingredient2);
+        Ingredient ingredient3 = TestUtils.ingredient("5a1e100b-b82d-42bb-b34f-fc1c3497f9c8", "Kukurydza", true);
+        ingredientRepo.save(ingredient3);
+        Ingredient ingredient4 = TestUtils.ingredient("6b1e5fdc-d771-423e-b968-46e5a03a8200", "Ziemniak", false);
+        ingredientRepo.save(ingredient4);
+        Ingredient ingredient5 = TestUtils.ingredient("e7cec9d4-cdf3-4b32-b2f4-9b90f41a8d05", "Masło", false);
+        ingredientRepo.save(ingredient5);
+        Ingredient ingredient6 = TestUtils.ingredient("dc0ff645-2596-4c7d-a6fa-6926db65be16", "Marchew", false);
+        ingredientRepo.save(ingredient6);
+        Ingredient ingredient7 = TestUtils.ingredient("8ede3563-edd0-4d8b-b121-dd21dd11b7b6", "Jabłko", false);
+        ingredientRepo.save(ingredient7);
+
+        Product product1 = TestUtils.product("19e1281b-949d-48c3-9486-c0abbf7a0267", "Udko korczaka", ingredient1, ingredient2, ingredient3);
+        productRepo.save(product1);
+        Product product2 = TestUtils.product("e192ce71-75a9-4778-82c8-0bff97a98879", "Ziemniak", ingredient4, ingredient5);
+        productRepo.save(product2);
+        Product product3 = TestUtils.product("2af0b1a3-e2be-4e16-bc8b-b5ff4355b44a", "Surówka", ingredient6, ingredient7);
+        productRepo.save(product3);
+
+        Dish dish1 = TestUtils.dish("b9820ee0-c4b8-4ed8-90f7-7fa947f72548", 1, product1);
+        dishRepo.save(dish1);
+        Dish dish2 = TestUtils.dish("74e078d9-f49f-4c53-be67-f9f4cbe5804f", 3, product2);
+        dishRepo.save(dish2);
+        Dish dish3 = TestUtils.dish("0173a261-be83-4e9c-914f-eacfdaba46a8", 1, product3);
+        dishRepo.save(dish3);
+
+        MenuItem menuItem1 = TestUtils.menuItem("3deb5633-e968-4bdc-a114-cd4430a4f003", "Zestaw odbiadowy szefa kuchni", new BigDecimal("20.00"),
+                VatTax._23, new BigDecimal("24.60"), restaurant, dish1, dish2, dish3);
+        menuItemRepo.save(menuItem1);
+
+        MenuItem menuItem2 = TestUtils.menuItem("44b2cd38-69eb-4178-b271-0bdef113eeea", "Powiększenie zestawu", new BigDecimal("8.00"),
+                VatTax._23, new BigDecimal("9.84"), restaurant, dish1);
+        menuItemRepo.save(menuItem2);
+
+        OrderItem orderItem = TestUtils.orderItem("1f4fa012-cd0b-4ae0-bbc0-040d73d75b6c", 2, menuItem1);
+        orderItemRepo.save(orderItem);
+
+        Order order = TestUtils.order(STR_UUID, null, "Poproszę bez panierki", user,
+                deliverer1, deliveryAddress, restaurant, new BigDecimal("40.00"), new BigDecimal("49.20"), new BigDecimal("49.20"),
+                TestUtils.orderStatus("2020-01-01T15:00:00Z", true, null, null),
+                orderItem
+        );
+        orderRepo.save(order);
+        txManager.commit(transaction1);
+
+        TransactionStatus transaction2 = txManager.getTransaction(TransactionDefinition.withDefaults());
+        Assertions.assertThrows(ResponseStatusException.class, () -> orderController.delete(UUID.fromString(STR_UUID)));
+        txManager.commit(transaction2);
+
+    }
 }
