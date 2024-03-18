@@ -1,11 +1,14 @@
 package pl.twisz.eLunchApp.controller;
 
+import com.google.common.truth.Truth8;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.annotation.Transactional;
 import pl.twisz.eLunchApp.DTO.DeliveryAddressDTO;
 import pl.twisz.eLunchApp.config.JPAConfiguration;
@@ -106,5 +109,32 @@ class DeliveryAddressControllerTest {
 
         DeliveryAddressDTO deliveryAddressDB = deliveryAddressService.getByUuid(UUID.fromString(STR_UUID)).orElseThrow();
         AssertionUtils.assertEquals(deliveryAddressJson, deliveryAddressDB);
+    }
+
+    // delete
+    @Test
+    @Transactional
+    public void delete() {
+        TransactionStatus transaction1 = txManager.getTransaction(TransactionDefinition.withDefaults());
+        User user = TestUtils.user(
+                "7a9478d0-ec1d-4334-a169-5835fed77af8",
+                TestUtils.personalData("John", "Smith", Sex.MALE, "505-505-505", "john@gmail.com"),
+                null,
+                TestUtils.loginData("jSmith", "K@r@mba"),
+                Archive.CURRENT);
+        userRepo.save(user);
+        DeliveryAddress deliveryAddress = TestUtils.deliveryAddress(STR_UUID,"My address",
+                "Street","51","2","11-111","Warsaw",null,"Poland",
+                null, user);
+        deliveryAddressRepo.save(deliveryAddress);
+        txManager.commit(transaction1);
+
+        TransactionStatus transaction2 = txManager.getTransaction(TransactionDefinition.withDefaults());
+        deliveryAddressController.delete(UUID.fromString(STR_UUID));
+        txManager.commit(transaction2);
+
+        TransactionStatus transaction3 = txManager.getTransaction(TransactionDefinition.withDefaults());
+        Truth8.assertThat(deliveryAddressService.getByUuid(UUID.fromString(STR_UUID))).isEmpty();
+        txManager.commit(transaction3);
     }
 }

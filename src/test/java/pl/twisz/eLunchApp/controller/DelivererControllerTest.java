@@ -1,11 +1,14 @@
 package pl.twisz.eLunchApp.controller;
 
+import com.google.common.truth.Truth8;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.annotation.Transactional;
 import pl.twisz.eLunchApp.DTO.DelivererDTO;
 import pl.twisz.eLunchApp.config.JPAConfiguration;
@@ -87,5 +90,26 @@ class DelivererControllerTest {
 
         DelivererDTO delivererDB = delivererService.getByUuid(UUID.fromString(STR_UUID)).orElseThrow();
         AssertionUtils.assertEquals(delivererJson, delivererDB);
+    }
+
+    // delete
+    @Test
+    @Transactional
+    public void delete() {
+        TransactionStatus transaction1 = txManager.getTransaction(TransactionDefinition.withDefaults());
+        Deliverer deliverer = TestUtils.deliverer(STR_UUID,
+                TestUtils.personalData("John", "Smith", Sex.MALE, "505-505-505", "john@gmail.com"),
+                TestUtils.loginData("jSmith", "K@r@mba"),
+                Archive.CURRENT);
+        delivererRepo.save(deliverer);
+        txManager.commit(transaction1);
+
+        TransactionStatus transaction2 = txManager.getTransaction(TransactionDefinition.withDefaults());
+        delivererController.delete(UUID.fromString(STR_UUID));
+        txManager.commit(transaction2);
+
+        TransactionStatus transaction3 = txManager.getTransaction(TransactionDefinition.withDefaults());
+        Truth8.assertThat(delivererService.getByUuid(UUID.fromString(STR_UUID))).isEmpty();
+        txManager.commit(transaction3);
     }
 }
