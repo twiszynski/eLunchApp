@@ -11,9 +11,9 @@ A Java/Spring Boot implementation of backend service for the meal ordering app.
 ## General information
 The project has been developed along with the ['Kurs Java - praktyczny projekt aplikacji'](https://strefakursow.pl/kursy/programowanie/kurs_java_-_praktyczny_projekt_aplikacji.html) training by Karol Janaszek.
 
-The purpose of this project was mainly educational. It served me to expand my knowledge of REST application and Spring Boot.
+The main purpose of this project was educational. It served to expand my knowledge of REST applications and Spring Boot.
 
-I chose this training due to its comprehensive approach of building a backend layer of web service. 
+I chose this training beacuse of its comprehensive approach to building a backend layer for web services. 
 
 
 ## Technologies
